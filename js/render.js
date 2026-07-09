@@ -9,6 +9,7 @@ import {
   poolBadge,
   escapeHtml
 } from "./format.js";
+import { t, tokenLabel } from "./i18n.js";
 import { calcCostParts } from "./aggregate.js";
 
 const CHART_WIDTH = 1000;
@@ -69,26 +70,26 @@ function renderModelThead(view) {
     }
     thead.innerHTML = `
       <tr>
-        <th class="${TH_BASE}">提供商</th>
-        <th class="${TH_BASE}">价表模型</th>
-        <th class="${TH_BASE}">类型</th>
-        <th class="${TH_NUM}">用量</th>
-        <th class="${TH_NUM}">单价 $/1M</th>
-        <th class="${TH_NUM}">分项花费</th>
-        <th class="${TH_NUM}">合计</th>
+        <th class="${TH_BASE}">${t("models.th.provider")}</th>
+        <th class="${TH_BASE}">${t("models.th.model")}</th>
+        <th class="${TH_BASE}">${t("models.th.type")}</th>
+        <th class="${TH_NUM}">${t("models.th.usage")}</th>
+        <th class="${TH_NUM}">${t("models.th.unitPrice")}</th>
+        <th class="${TH_NUM}">${t("models.th.partCost")}</th>
+        <th class="${TH_NUM}">${t("models.th.total")}</th>
       </tr>`;
   } else {
     if (colgroup) colgroup.remove();
     thead.innerHTML = `
       <tr>
-        <th class="${TH_BASE}">提供商</th>
-        <th class="${TH_BASE}">价表模型</th>
-        <th class="${TH_BASE}">匹配方式</th>
-        <th class="${TH_BASE}">用量池</th>
-        <th class="${TH_NUM}">事件</th>
-        <th class="${TH_NUM}">估算花费</th>
-        <th class="${TH_NUM}">花费占比</th>
-        <th class="${TH_NUM}">单次均价</th>
+        <th class="${TH_BASE}">${t("models.th.provider")}</th>
+        <th class="${TH_BASE}">${t("models.th.model")}</th>
+        <th class="${TH_BASE}">${t("models.th.match")}</th>
+        <th class="${TH_BASE}">${t("models.th.pool")}</th>
+        <th class="${TH_NUM}">${t("models.th.events")}</th>
+        <th class="${TH_NUM}">${t("models.th.cost")}</th>
+        <th class="${TH_NUM}">${t("models.th.costShare")}</th>
+        <th class="${TH_NUM}">${t("models.th.avgCost")}</th>
       </tr>`;
   }
 }
@@ -97,7 +98,7 @@ function priceCell(price, sameAsInput) {
   if (price == null) return "—";
   const base = formatPrice(price);
   if (sameAsInput) {
-    return base + ' <span class="price-hint">同 Input</span>';
+    return base + ' <span class="price-hint">' + t("models.priceSameAsInput") + "</span>";
   }
   return base;
 }
@@ -109,10 +110,16 @@ function calcCell(content, cls, attrs) {
   return '<td class="' + (cls || "") + '"' + attrStr + ">" + content + "</td>";
 }
 
+function displayModelName(name) {
+  if (!name) return t("token.emptyModel");
+  if (name === "__other__") return t("token.other");
+  return name;
+}
+
 function buildCalcGroupHtml(m, isUnmatched, groupIndex) {
   const provider = escapeHtml(isUnmatched ? "—" : m.provider);
-  const name = escapeHtml(m.name);
-  const title = escapeHtml(m.sampleCsv || m.name);
+  const name = escapeHtml(displayModelName(m.name));
+  const title = escapeHtml(m.sampleCsv || displayModelName(m.name));
   const total = isUnmatched ? 0 : m.cost;
   const tokens = {
     input: m.input,
@@ -127,12 +134,12 @@ function buildCalcGroupHtml(m, isUnmatched, groupIndex) {
 
   if (isUnmatched) {
     lineDefs = [
-      { label: "输入", usage: m.input },
-      { label: "缓存写入", usage: m.cacheWrite },
-      { label: "缓存读取", usage: m.cacheRead },
-      { label: "输出", usage: m.output }
+      { label: t("models.line.input"), usage: m.input },
+      { label: t("models.line.cacheWrite"), usage: m.cacheWrite },
+      { label: t("models.line.cacheRead"), usage: m.cacheRead },
+      { label: t("models.line.output"), usage: m.output }
     ];
-    footnote = "无价表 · 估算 $0";
+    footnote = t("models.footnote.unmatched");
   } else {
     const parts = calcCostParts(tokens, m.price);
     const price = m.price;
@@ -140,54 +147,54 @@ function buildCalcGroupHtml(m, isUnmatched, groupIndex) {
     if (price.isAuto) {
       lineDefs = [
         {
-          label: "输入+缓存写",
+          label: t("models.line.inputPlusCw"),
           usage: m.input + m.cacheWrite,
           unitPrice: price.input,
           partCost: parts.input,
           sameAsInput: false
         },
         {
-          label: "缓存读取",
+          label: t("models.line.cacheRead"),
           usage: m.cacheRead,
           unitPrice: price.cacheRead,
           partCost: parts.cacheRead,
           sameAsInput: false
         },
         {
-          label: "输出",
+          label: t("models.line.output"),
           usage: m.output,
           unitPrice: price.output,
           partCost: parts.output,
           sameAsInput: false
         }
       ];
-      footnote = "Auto：Input 与 Cache Write 合并按 Input 价";
+      footnote = t("models.footnote.auto");
     } else {
       const cwSame = price.cacheWrite == null;
       lineDefs = [
         {
-          label: "输入",
+          label: t("models.line.input"),
           usage: m.input,
           unitPrice: price.input,
           partCost: parts.input,
           sameAsInput: false
         },
         {
-          label: "缓存写入",
+          label: t("models.line.cacheWrite"),
           usage: m.cacheWrite,
           unitPrice: cwSame ? price.input : price.cacheWrite,
           partCost: parts.cacheWrite,
           sameAsInput: cwSame
         },
         {
-          label: "缓存读取",
+          label: t("models.line.cacheRead"),
           usage: m.cacheRead,
           unitPrice: price.cacheRead,
           partCost: parts.cacheRead,
           sameAsInput: false
         },
         {
-          label: "输出",
+          label: t("models.line.output"),
           usage: m.output,
           unitPrice: price.output,
           partCost: parts.output,
@@ -261,13 +268,16 @@ function buildCalcGroupHtml(m, isUnmatched, groupIndex) {
 
 function renderSummaryBody(summary) {
   if (summary.models.length === 0 && summary.unmatched.length === 0) {
-    return '<tr><td colspan="8"><p class="empty-note">没有可汇总的计费事件</p></td></tr>';
+    return '<tr><td colspan="8"><p class="empty-note">' + t("models.empty") + "</p></td></tr>";
   }
   return summary.models.map((m) => `
       <tr>
         <td>${escapeHtml(m.provider)}</td>
-        <td class="model-name" title="${escapeHtml(m.sampleCsv || m.name)}">${escapeHtml(m.name)}</td>
-        <td>${strengthBadge(m.strength)}</td>
+        <td class="model-name" title="${escapeHtml(m.sampleCsv || displayModelName(m.name))}">${escapeHtml(displayModelName(m.name))}</td>
+        <td>${strengthBadge(m.strength, {
+          sampleCsv: m.sampleCsv,
+          priceName: displayModelName(m.name)
+        })}</td>
         <td>${poolBadge(m.pool)}</td>
         <td class="num">${formatInt(m.events)}</td>
         <td class="num cost">${formatUsd(m.cost)}</td>
@@ -284,7 +294,7 @@ function renderCalcBody(summary) {
   );
   const all = matched.concat(unmatched);
   if (all.length === 0) {
-    return '<tr><td colspan="7"><p class="empty-note">没有可汇总的计费事件</p></td></tr>';
+    return '<tr><td colspan="7"><p class="empty-note">' + t("models.empty") + "</p></td></tr>";
   }
   return all.join("");
 }
@@ -322,8 +332,8 @@ export function syncModelViewUi(summary) {
 
   if (note) {
     note.textContent = modelView === "calc"
-      ? "单位 $/1M tokens · 分项之和等于该模型估算花费"
-      : "按估算花费降序";
+      ? t("models.note.calc")
+      : t("models.note.summary");
   }
 
   if (unmatchedBlock) {
@@ -352,16 +362,55 @@ export function setUploadCompact(compact) {
 
 export function renderInsight(summary) {
   const el = document.getElementById("insight");
-  let html = escapeHtml(summary.insight || "");
-  const muted = [];
-  if (summary.billableEvents > 0 && summary.fuzzyEvents > 0) {
-    muted.push(
-      "模糊匹配 " + formatInt(summary.fuzzyEvents) + " 条 · 花费 "
-      + formatUsd(summary.fuzzyCost)
+  let html = "";
+
+  if (summary.billableEvents <= 0) {
+    html = escapeHtml(t("insight.none"));
+  } else {
+    const parts = [];
+    if (summary.totalCost > 0 && summary.dominantPoolShare >= 0.5) {
+      const pool = summary.dominantPoolKey === "api"
+        ? t("insight.poolApi")
+        : t("insight.poolFp");
+      parts.push(t("insight.poolShare", {
+        pool,
+        pct: formatPct(summary.dominantPoolShare)
+      }));
+    }
+    if (summary.topModel && summary.topModel.name) {
+      parts.push(t("insight.topModel", {
+        name: summary.topModel.name,
+        pct: formatPct(summary.topModel.share)
+      }));
+    }
+    if (summary.topComposition && summary.topComposition.share >= 0.4) {
+      parts.push(t("insight.topComposition", {
+        label: tokenLabel(summary.topComposition.key),
+        pct: formatPct(summary.topComposition.share)
+      }));
+    }
+    if (summary.peakDay && summary.peakDay.date) {
+      parts.push(t("insight.peakDay", {
+        date: formatShortDate(summary.peakDay.date),
+        cost: formatUsd(summary.peakDay.cost)
+      }));
+    }
+    html = escapeHtml(
+      parts.length > 0
+        ? parts.join(" · ")
+        : t("insight.totalCost", { cost: formatUsd(summary.totalCost) })
     );
   }
+
+  const muted = [];
+  if (summary.billableEvents > 0 && summary.fuzzyEvents > 0) {
+    muted.push(t("insight.fuzzy", {
+      n: formatInt(summary.fuzzyEvents),
+      cost: formatUsd(summary.fuzzyCost)
+    }));
+  }
   if (summary.billableEvents > 0 && summary.unmatchedEvents > 0) {
-    muted.push("未匹配 " + formatInt(summary.unmatchedEvents) + " 条");
+    muted.push(t("insight.unmatched", { n: formatInt(summary.unmatchedEvents) }));
   }
   if (muted.length > 0) {
     html += '<span class="muted"> · ' + escapeHtml(muted.join(" · ")) + "</span>";
@@ -381,13 +430,16 @@ export function renderMetrics(summary) {
   document.getElementById("metricMaxShare").textContent = formatPct(summary.maxModeCostShare);
 
   const range = summary.dateRange.start && summary.dateRange.end
-    ? (formatShortDate(summary.dateRange.start) + " 至 " + formatShortDate(summary.dateRange.end) + " · 本地时区")
-    : "无日期";
+    ? t("meta.range", {
+      start: formatShortDate(summary.dateRange.start),
+      end: formatShortDate(summary.dateRange.end)
+    })
+    : t("meta.noDate");
   document.getElementById("metaRow").textContent = [
-    "计费事件 " + formatInt(summary.billableEvents),
-    "已排除 " + formatInt(summary.excludedEvents),
-    "精确匹配率 " + formatPct(summary.exactMatchRate),
-    "未匹配 " + formatInt(summary.unmatchedEvents),
+    t("meta.billable", { n: formatInt(summary.billableEvents) }),
+    t("meta.excluded", { n: formatInt(summary.excludedEvents) }),
+    t("meta.exactRate", { pct: formatPct(summary.exactMatchRate) }),
+    t("meta.unmatched", { n: formatInt(summary.unmatchedEvents) }),
     range
   ].join(" · ");
 }
@@ -481,7 +533,7 @@ function renderCumulativeSvg(daily, options, layout) {
   }
 
   return {
-    svg: '<svg class="chart-svg chart-svg-cumulative" viewBox="0 0 ' + width + " " + height + '" role="img" aria-label="累计趋势">'
+    svg: '<svg class="chart-svg chart-svg-cumulative" viewBox="0 0 ' + width + " " + height + '" role="img" aria-label="' + escapeHtml(t("trend.aria.cumulative")) + '">'
       + grid + series + "</svg>",
     totalCum,
     xCenter
@@ -565,7 +617,7 @@ function renderDailySvg(daily, options, layout) {
       + '" width="' + barW + '" height="' + plotH + '" />';
   }).join("");
 
-  return '<svg class="chart-svg chart-svg-daily" viewBox="0 0 ' + width + " " + height + '" role="img" aria-label="按日趋势">'
+  return '<svg class="chart-svg chart-svg-daily" viewBox="0 0 ' + width + " " + height + '" role="img" aria-label="' + escapeHtml(t("trend.aria.daily")) + '">'
     + grid + avgLine + bars + hits + "</svg>";
 }
 
@@ -580,19 +632,32 @@ function buildTipHtml(daily, index, options, cumMeta) {
 
   let rows = [];
   if (metric === "cost") {
-    rows.push("当日 " + formatUsd(d.cost) + " · 第一方 " + formatUsd(d.firstPartyCost || 0) + " · API " + formatUsd(d.apiCost || 0));
-    rows.push("累计至当日 " + formatUsd(totalCum) + "（占区间 " + formatPct(sharePct) + "）");
+    rows.push(t("tip.dayCost", {
+      cost: formatUsd(d.cost),
+      fp: formatUsd(d.firstPartyCost || 0),
+      api: formatUsd(d.apiCost || 0)
+    }));
+    rows.push(t("tip.cumCost", {
+      value: formatUsd(totalCum),
+      pct: formatPct(sharePct)
+    }));
   } else if (metric === "events") {
-    rows.push("当日 " + formatInt(d.events) + " 事件");
-    rows.push("累计至当日 " + formatInt(totalCum) + " 事件（占区间 " + formatPct(sharePct) + "）");
+    rows.push(t("tip.dayEvents", { n: formatInt(d.events) }));
+    rows.push(t("tip.cumEvents", {
+      n: formatInt(totalCum),
+      pct: formatPct(sharePct)
+    }));
   } else {
-    rows.push("当日 " + formatInt(d.tokens) + " tokens");
-    rows.push("累计至当日 " + formatInt(totalCum) + " tokens（占区间 " + formatPct(sharePct) + "）");
+    rows.push(t("tip.dayTokens", { n: formatInt(d.tokens) }));
+    rows.push(t("tip.cumTokens", {
+      n: formatInt(totalCum),
+      pct: formatPct(sharePct)
+    }));
   }
 
   let foot = "";
   if (daily.length === 1) {
-    foot = "区间过短，趋势参考有限";
+    foot = t("tip.shortRange");
   }
 
   return '<div class="chart-tip-date">' + escapeHtml(label) + "</div>"
@@ -680,7 +745,7 @@ export function renderTrendCharts(summary, options) {
 
   if (daily.length === 0) {
     cumHost.innerHTML = "";
-    dailyHost.innerHTML = '<p class="chart-empty">无按日数据</p>';
+    dailyHost.innerHTML = '<p class="chart-empty">' + t("trend.empty") + "</p>";
     trendGeometry = null;
     updateCrosshairAndTip(null);
     return;
@@ -868,17 +933,18 @@ function renderCompositionRows(rows, options = {}) {
 
   const paint = () => {
     if (options.empty) {
-      host.innerHTML = '<p class="empty-note">' + escapeHtml(options.emptyMessage || "暂无数据") + "</p>";
+      host.innerHTML = '<p class="empty-note">' + escapeHtml(options.emptyMessage || t("composition.noData")) + "</p>";
       return;
     }
     if (!rows || rows.length === 0) {
-      host.innerHTML = '<p class="empty-note">暂无构成数据</p>';
+      host.innerHTML = '<p class="empty-note">' + t("composition.empty") + "</p>";
       return;
     }
     host.innerHTML = rows.map((row) => {
       const widthPct = Math.max(0, Math.min(100, row.share * 100));
+      const label = row.label || tokenLabel(row.key);
       return '<div class="bar-row">'
-        + '<div class="bar-label">' + escapeHtml(row.label) + "</div>"
+        + '<div class="bar-label">' + escapeHtml(label) + "</div>"
         + '<div class="bar-track"><div class="bar-fill ' + row.tone + '" style="width:' + widthPct + '%"></div></div>'
         + '<div class="num">' + formatUsd(row.cost) + "</div>"
         + '<div class="num share">' + formatPct(row.share) + "</div>"
@@ -926,7 +992,7 @@ export function renderModels(summary, options = {}) {
     unmatchedBlock.classList.add("is-visible");
     unmatchedBody.innerHTML = summary.unmatched.map((m) => `
       <tr class="unmatched">
-        <td>${escapeHtml(m.name)}</td>
+        <td>${escapeHtml(displayModelName(m.name))}</td>
         <td class="num">${formatInt(m.events)}</td>
         <td class="num">${formatInt(m.input)}</td>
         <td class="num">${formatInt(m.cacheWrite)}</td>
@@ -941,17 +1007,18 @@ export function renderModels(summary, options = {}) {
 }
 
 function usageEmptyNote(message) {
-  return '<p class="usage-empty">' + escapeHtml(message || "暂无计费用量") + "</p>";
+  return '<p class="usage-empty">' + escapeHtml(message || t("usage.empty")) + "</p>";
 }
 
 function renderModelTokenChart(rows) {
   if (!rows || rows.length === 0) return usageEmptyNote();
   const maxShare = Math.max(...rows.map((r) => r.tokenShare), 0.001);
   return rows.map((row) => {
+    const displayName = displayModelName(row.name);
     const widthPct = Math.max(0, Math.min(100, (row.tokenShare / maxShare) * 100));
-    const title = row.name + " · " + formatTokens(row.tokens) + " tokens · " + formatPct(row.tokenShare);
+    const title = displayName + " · " + formatTokens(row.tokens) + " tokens · " + formatPct(row.tokenShare);
     return '<div class="usage-hbar" title="' + escapeHtml(title) + '">'
-      + '<span class="usage-hbar-label" title="' + escapeHtml(row.name) + '">' + escapeHtml(row.name) + "</span>"
+      + '<span class="usage-hbar-label" title="' + escapeHtml(displayName) + '">' + escapeHtml(displayName) + "</span>"
       + '<div class="usage-hbar-track" aria-hidden="true">'
       + '<div class="usage-hbar-fill" style="width:' + widthPct.toFixed(2) + '%"></div>'
       + "</div>"
@@ -967,17 +1034,19 @@ function renderTokenMixChart(rows) {
   if (total <= 0) return usageEmptyNote();
 
   const segments = rows.filter((r) => r.tokens > 0).map((row) => {
+    const label = row.label || tokenLabel(row.key);
     const widthPct = Math.max(0, Math.min(100, row.share * 100));
     const tone = row.tone ? " " + row.tone : "";
-    const title = row.label + " · " + formatTokens(row.tokens) + " · " + formatPct(row.share);
+    const title = label + " · " + formatTokens(row.tokens) + " · " + formatPct(row.share);
     return '<div class="usage-stack-seg' + tone + '" style="width:' + widthPct.toFixed(4)
       + '%" title="' + escapeHtml(title) + '" aria-label="' + escapeHtml(title) + '"></div>';
   }).join("");
 
   const legend = rows.map((row) => {
+    const label = row.label || tokenLabel(row.key);
     return '<span class="usage-stack-legend-item">'
       + '<span class="usage-stack-swatch' + (row.tone ? " " + row.tone : "") + '" aria-hidden="true"></span>'
-      + '<span class="usage-stack-legend-label">' + escapeHtml(row.label) + "</span>"
+      + '<span class="usage-stack-legend-label">' + escapeHtml(label) + "</span>"
       + '<span class="usage-stack-legend-val num">' + formatTokens(row.tokens) + "</span>"
       + '<span class="usage-stack-legend-pct num">' + formatPct(row.share) + "</span>"
       + "</span>";
@@ -995,19 +1064,26 @@ function renderPrefCompareChart(rows) {
   );
 
   return rows.map((row) => {
+    const displayName = displayModelName(row.name);
     const eventW = Math.max(0, Math.min(100, (row.eventShare / maxShare) * 100));
     const tokenW = Math.max(0, Math.min(100, (row.tokenShare / maxShare) * 100));
     return '<div class="usage-pref-row">'
-      + '<span class="usage-pref-name" title="' + escapeHtml(row.name) + '">' + escapeHtml(row.name) + "</span>"
+      + '<span class="usage-pref-name" title="' + escapeHtml(displayName) + '">' + escapeHtml(displayName) + "</span>"
       + '<div class="usage-pref-tracks">'
-      + '<div class="usage-pref-track" title="事件 ' + formatInt(row.events) + ' · ' + formatPct(row.eventShare) + '">'
-      + '<span class="usage-pref-track-label">事件</span>'
+      + '<div class="usage-pref-track" title="' + escapeHtml(t("usage.pref.eventsTitle", {
+        count: formatInt(row.events),
+        pct: formatPct(row.eventShare)
+      })) + '">'
+      + '<span class="usage-pref-track-label">' + t("usage.pref.events") + "</span>"
       + '<div class="usage-pref-track-bar" aria-hidden="true">'
       + '<div class="usage-pref-fill event" style="width:' + eventW.toFixed(2) + '%"></div>'
       + "</div>"
       + '<span class="usage-pref-pct num">' + formatPct(row.eventShare) + "</span>"
       + "</div>"
-      + '<div class="usage-pref-track" title="Token ' + formatTokens(row.tokens) + ' · ' + formatPct(row.tokenShare) + '">'
+      + '<div class="usage-pref-track" title="' + escapeHtml(t("usage.pref.tokenTitle", {
+        tokens: formatTokens(row.tokens),
+        pct: formatPct(row.tokenShare)
+      })) + '">'
       + '<span class="usage-pref-track-label">Token</span>'
       + '<div class="usage-pref-track-bar" aria-hidden="true">'
       + '<div class="usage-pref-fill token" style="width:' + tokenW.toFixed(2) + '%"></div>'
@@ -1019,6 +1095,41 @@ function renderPrefCompareChart(rows) {
   }).join("");
 }
 
+function buildUsageInsight(summary) {
+  if (!(summary.billableEvents > 0 && summary.totalTokens > 0)) {
+    return t("usage.noData");
+  }
+  const favorites = summary.favorites || {};
+  if (favorites.mismatch) {
+    return t("usageInsight.mismatch", {
+      eventsModel: favorites.byEvents.name,
+      tokensModel: favorites.byTokens.name
+    });
+  }
+  const parts = [];
+  if (favorites.byTokens && favorites.byTokens.name) {
+    parts.push(t("usageInsight.topTokens", {
+      name: favorites.byTokens.name,
+      pct: formatPct(favorites.byTokens.share)
+    }));
+  }
+  if (summary.topTokenComposition && summary.topTokenComposition.share >= 0.35) {
+    parts.push(t("usageInsight.topStructure", {
+      label: tokenLabel(summary.topTokenComposition.key),
+      pct: formatPct(summary.topTokenComposition.share)
+    }));
+  }
+  if (summary.peakTokenDay && summary.peakTokenDay.date) {
+    parts.push(t("usageInsight.peakDay", {
+      date: formatShortDate(summary.peakTokenDay.date),
+      tokens: formatTokens(summary.peakTokenDay.tokens)
+    }));
+  }
+  return parts.length > 0
+    ? parts.join(" · ")
+    : t("usageInsight.total", { tokens: formatTokens(summary.totalTokens) });
+}
+
 export function renderUsage(summary) {
   const insightEl = document.getElementById("usageInsight");
   const anchorsEl = document.getElementById("usageAnchors");
@@ -1028,7 +1139,7 @@ export function renderUsage(summary) {
   if (!insightEl || !anchorsEl || !modelHost || !mixHost || !prefHost) return;
 
   const hasUsage = summary.billableEvents > 0 && summary.totalTokens > 0;
-  insightEl.textContent = summary.usageInsight || "暂无 Token 用量数据";
+  insightEl.textContent = buildUsageInsight(summary);
 
   if (!hasUsage) {
     anchorsEl.textContent = "";
@@ -1039,9 +1150,9 @@ export function renderUsage(summary) {
   }
 
   anchorsEl.textContent = [
-    "总 Token " + formatTokens(summary.totalTokens),
-    "单次均 " + formatTokens(summary.avgTokensPerEvent),
-    "缓存命中 " + formatPct(summary.cacheHitRate)
+    t("usage.anchor.total", { tokens: formatTokens(summary.totalTokens) }),
+    t("usage.anchor.avg", { tokens: formatTokens(summary.avgTokensPerEvent) }),
+    t("usage.anchor.cache", { pct: formatPct(summary.cacheHitRate) })
   ].join(" · ");
 
   modelHost.innerHTML = renderModelTokenChart(summary.modelsByTokens || []);

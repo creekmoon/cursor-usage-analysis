@@ -11,12 +11,14 @@ import {
   setModelView,
   bindTrendChartEvents
 } from "./render.js";
+import { initI18n, setLocale, getLocale, t, onLocaleChange } from "./i18n.js";
 
 let currentSummary = null;
 let trendState = {
   metric: "cost",
   selectedDate: null
 };
+let isLoading = false;
 
 function showError(message) {
   const bar = document.getElementById("errorBar");
@@ -37,25 +39,24 @@ function validateHeaders(headers) {
 function processText(text) {
   const parsed = parseCsv(text);
   if (!parsed.records || parsed.records.length === 0) {
-    throw new Error("CSV 没有数据行。请确认是 Cursor usage-events 导出文件。");
+    throw new Error(t("error.noRows"));
   }
   const missing = validateHeaders(parsed.headers);
   if (missing.length > 0) {
-    throw new Error("缺少必要列：" + missing.join(", "));
+    throw new Error(t("error.missingCols", { cols: missing.join(", ") }));
   }
   const pricingIndex = buildPricingIndex(PRICING_TABLE);
   return aggregate(parsed.records, pricingIndex);
 }
 
 function setLoading(loading) {
+  isLoading = loading;
   const pickBtn = document.getElementById("pickBtn");
   const replaceBtn = document.getElementById("replaceBtn");
-  const label = loading ? "解析中…" : "选择 CSV";
-  const replaceLabel = loading ? "解析中…" : "更换 CSV";
   pickBtn.disabled = loading;
   replaceBtn.disabled = loading;
-  pickBtn.textContent = label;
-  replaceBtn.textContent = replaceLabel;
+  pickBtn.textContent = loading ? t("action.parsing") : t("action.pickCsv");
+  replaceBtn.textContent = loading ? t("action.parsing") : t("action.replaceCsv");
 }
 
 function refreshTrendView() {
@@ -66,6 +67,16 @@ function refreshTrendView() {
   });
 }
 
+function refreshAfterLocaleChange() {
+  clearError();
+  setLoading(isLoading);
+  if (currentSummary) {
+    render(currentSummary, trendState.metric, trendState);
+  } else {
+    syncModelViewUi(null);
+  }
+}
+
 function handleFile(file) {
   if (!file) return;
   clearError();
@@ -73,7 +84,7 @@ function handleFile(file) {
 
   if (!file.size) {
     setLoading(false);
-    showError("文件为空，请重新选择。");
+    showError(t("error.emptyFile"));
     return;
   }
 
@@ -82,7 +93,7 @@ function handleFile(file) {
     try {
       const text = String(reader.result || "");
       if (!text.trim()) {
-        throw new Error("文件内容为空。");
+        throw new Error(t("error.emptyContent"));
       }
       const summary = processText(text);
       currentSummary = summary;
@@ -92,14 +103,14 @@ function handleFile(file) {
       document.getElementById("results").classList.remove("is-visible");
       setUploadCompact(false);
       currentSummary = null;
-      showError(err.message || "无法解析 CSV，请确认是 Cursor usage-events 导出文件。");
+      showError(err.message || t("error.parseFailed"));
     } finally {
       setLoading(false);
     }
   };
   reader.onerror = () => {
     setLoading(false);
-    showError("读取文件失败，请重试。");
+    showError(t("error.readFailed"));
   };
   reader.readAsText(file, "UTF-8");
 }
@@ -110,6 +121,7 @@ function bindUi() {
   const pickBtn = document.getElementById("pickBtn");
   const replaceBtn = document.getElementById("replaceBtn");
   const chartMetric = document.getElementById("chartMetric");
+  const langToggle = document.getElementById("langToggle");
 
   function openPicker() { input.click(); }
   pickBtn.addEventListener("click", openPicker);
@@ -196,6 +208,21 @@ function bindUi() {
       syncModelViewUi(null);
     }
   });
+
+  if (langToggle) {
+    langToggle.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-lang]");
+      if (!btn) return;
+      const next = btn.getAttribute("data-lang");
+      if (next === getLocale()) return;
+      setLocale(next);
+    });
+  }
+
+  onLocaleChange(() => {
+    refreshAfterLocaleChange();
+  });
 }
 
+initI18n();
 bindUi();

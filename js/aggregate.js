@@ -1,6 +1,5 @@
 import { COMPOSITION_META } from "./pricing.js";
 import { matchModel } from "./match.js";
-import { formatUsd, formatPct, formatShortDate, formatTokens } from "./format.js";
 
 export function isMaxMode(row) {
   const v = String(row["Max Mode"] || "").trim().toLowerCase();
@@ -127,7 +126,6 @@ function buildCompositionRows(composition, totalCost) {
     const cost = composition[meta.key];
     return {
       key: meta.key,
-      label: meta.label,
       tone: meta.tone,
       cost,
       share: totalCost > 0 ? cost / totalCost : 0
@@ -187,7 +185,7 @@ function buildModelsByTokens(allUsageRows, totalTokens, limit) {
     const otherTokens = rest.reduce((s, m) => s + m.tokens, 0);
     const otherEvents = rest.reduce((s, m) => s + m.events, 0);
     rows.push({
-      name: "其他",
+      name: "__other__",
       tokens: otherTokens,
       tokenShare: totalTokens > 0 ? otherTokens / totalTokens : 0,
       events: otherEvents,
@@ -236,7 +234,6 @@ function buildTokenCompositionRows(totals, totalTokens) {
     const tokens = tokenMap[meta.key];
     return {
       key: meta.key,
-      label: meta.label,
       tone: meta.tone,
       tokens,
       share: totalTokens > 0 ? tokens / totalTokens : 0
@@ -286,7 +283,7 @@ export function aggregate(records, pricingIndex) {
     totalCacheRead += tokens.cacheRead;
     totalOutput += tokens.output;
 
-    const csvModel = row.Model || "(空模型)";
+    const csvModel = row.Model || "";
     const match = matchModel(csvModel, pricingIndex);
     const dayKey = localDateKey(row.Date);
     const parts = match.entry ? calcCostParts(tokens, match.entry) : {
@@ -471,7 +468,6 @@ export function aggregate(records, pricingIndex) {
     const cost = composition[meta.key];
     return {
       key: meta.key,
-      label: meta.label,
       tone: meta.tone,
       cost,
       share: totalCost > 0 ? cost / totalCost : 0
@@ -480,26 +476,8 @@ export function aggregate(records, pricingIndex) {
 
   const topComposition = compositionRows.slice().sort((a, b) => b.cost - a.cost)[0];
 
-  let insight = "暂无计费数据";
-  if (billableEvents > 0) {
-    const dominantPool = apiCost >= firstPartyCost
-      ? { label: "API 用量池", share: apiShare }
-      : { label: "第一方模型用量池", share: firstPartyShare };
-    const parts = [];
-    if (totalCost > 0 && dominantPool.share >= 0.5) {
-      parts.push(dominantPool.label + "占 " + formatPct(dominantPool.share));
-    }
-    if (topModel.name) {
-      parts.push("主因模型 " + topModel.name + " " + formatPct(topModel.share));
-    }
-    if (topComposition && topComposition.share >= 0.4) {
-      parts.push("花费主因 " + topComposition.label + " " + formatPct(topComposition.share));
-    }
-    if (peakDay.date) {
-      parts.push("峰值日 " + formatShortDate(peakDay.date) + " " + formatUsd(peakDay.cost));
-    }
-    insight = parts.length > 0 ? parts.join(" · ") : ("估算总花费 " + formatUsd(totalCost));
-  }
+  const dominantPoolKey = apiCost >= firstPartyCost ? "api" : "firstParty";
+  const dominantPoolShare = dominantPoolKey === "api" ? apiShare : firstPartyShare;
 
   const totalTokens = totalInput + totalCacheWrite + totalCacheRead + totalOutput;
   const tokenTotals = {
@@ -540,26 +518,6 @@ export function aggregate(records, pricingIndex) {
   const tokenComposition = buildTokenCompositionRows(tokenTotals, totalTokens);
   const topTokenComposition = tokenComposition.slice().sort((a, b) => b.tokens - a.tokens)[0];
 
-  let usageInsight = "暂无 Token 用量数据";
-  if (billableEvents > 0 && totalTokens > 0) {
-    if (favorites.mismatch) {
-      usageInsight = "常用 " + favorites.byEvents.name
-        + "，Token 消耗主因 " + favorites.byTokens.name;
-    } else {
-      const parts = [];
-      if (favorites.byTokens.name) {
-        parts.push("Token 主因 " + favorites.byTokens.name + " " + formatPct(favorites.byTokens.share));
-      }
-      if (topTokenComposition && topTokenComposition.share >= 0.35) {
-        parts.push("结构主因 " + topTokenComposition.label + " " + formatPct(topTokenComposition.share));
-      }
-      if (peakTokenDay.date) {
-        parts.push("峰值日 " + formatShortDate(peakTokenDay.date) + " " + formatTokens(peakTokenDay.tokens));
-      }
-      usageInsight = parts.length > 0 ? parts.join(" · ") : ("总 Token " + formatTokens(totalTokens));
-    }
-  }
-
   return {
     totalCost,
     firstPartyCost,
@@ -582,7 +540,10 @@ export function aggregate(records, pricingIndex) {
     cacheReadCostShare,
     peakDay,
     topModel,
-    insight,
+    dominantPoolKey,
+    dominantPoolShare,
+    topComposition,
+    topTokenComposition,
     daily: filledDays,
     composition: compositionRows,
     models,
@@ -594,7 +555,6 @@ export function aggregate(records, pricingIndex) {
     favorites,
     modelsByTokens,
     prefCompare,
-    tokenComposition,
-    usageInsight
+    tokenComposition
   };
 }

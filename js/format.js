@@ -1,3 +1,5 @@
+import { t } from "./i18n.js";
+
 export function formatUsd(n) {
   if (!Number.isFinite(n)) return "$0.00";
   const abs = Math.abs(n);
@@ -42,16 +44,39 @@ export function formatPrice(n) {
   return "$" + n.toFixed(2);
 }
 
-export function strengthBadge(strength) {
-  if (strength === "exact") return '<span class="badge exact">精确匹配</span>';
-  if (strength === "fuzzy") return '<span class="badge fuzzy">模糊匹配</span>';
-  return '<span class="badge miss">未匹配</span>';
+function buildFuzzyTip(sampleCsv, priceName) {
+  const samples = String(sampleCsv || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const price = String(priceName || "").trim();
+  if (!samples.length || !price) return "";
+
+  const maxShow = 3;
+  const shown = samples.slice(0, maxShow).join(", ");
+  if (samples.length === 1) {
+    return t("tip.fuzzyMatch", { csv: samples[0], price });
+  }
+  if (samples.length <= maxShow) {
+    return t("tip.fuzzyMatchMulti", { csv: shown, price });
+  }
+  return t("tip.fuzzyMatchMore", { csv: shown, n: samples.length, price });
+}
+
+export function strengthBadge(strength, options = {}) {
+  if (strength === "exact") return '<span class="badge exact">' + t("badge.exact") + "</span>";
+  if (strength === "fuzzy") {
+    const tip = buildFuzzyTip(options.sampleCsv, options.priceName);
+    const titleAttr = tip ? ' title="' + escapeHtml(tip) + '"' : "";
+    return '<span class="badge fuzzy"' + titleAttr + ">" + t("badge.fuzzy") + "</span>";
+  }
+  return '<span class="badge miss">' + t("badge.miss") + "</span>";
 }
 
 export function poolBadge(pool) {
-  if (pool === "firstParty") return '<span class="badge pool-fp">第一方模型</span>';
-  if (pool === "api") return '<span class="badge pool-api">API</span>';
-  return '<span class="badge pool-unknown">未知</span>';
+  if (pool === "firstParty") return '<span class="badge pool-fp">' + t("badge.poolFp") + "</span>";
+  if (pool === "api") return '<span class="badge pool-api">' + t("badge.poolApi") + "</span>";
+  return '<span class="badge pool-unknown">' + t("badge.poolUnknown") + "</span>";
 }
 
 export function escapeHtml(s) {

@@ -55,8 +55,8 @@ export const REQUIRED_COLUMNS = [
 ];
 
 export const COMPOSITION_META = [
-  { key: "input", label: "输入", tone: "" },
-  { key: "cacheWrite", label: "缓存写入", tone: "t2" },
-  { key: "cacheRead", label: "缓存读取", tone: "t3" },
-  { key: "output", label: "输出", tone: "t4" }
+  { key: "input", tone: "" },
+  { key: "cacheWrite", tone: "t2" },
+  { key: "cacheRead", tone: "t3" },
+  { key: "output", tone: "t4" }
 ];
