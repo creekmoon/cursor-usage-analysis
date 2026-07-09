@@ -76,7 +76,11 @@
 
     <section class="upload flex flex-col items-center justify-center gap-3 min-h-[148px] px-6 py-7 bg-surface border border-dashed border-border-strong rounded-xl transition-colors" id="uploadZone" aria-label="上传 CSV">
       <p class="upload-title m-0 text-[15px] font-medium">拖入 usage-events CSV，或点击选择</p>
-      <p class="upload-hint m-0 text-subtle text-[13px]">导入后显示趋势、花费构成与模型汇总。文件仅在本地解析。</p>
+      <ol class="upload-guide m-0 p-0 list-none flex flex-col gap-1.5 text-secondary text-[13px] leading-relaxed text-left w-full max-w-[420px]">
+        <li class="flex gap-2"><span class="text-subtle tabular-nums shrink-0">1.</span><span>打开 <a href="https://cursor.com/dashboard/usage" target="_blank" rel="noopener noreferrer" class="text-accent no-underline hover:underline">cursor.com/dashboard/usage</a></span></li>
+        <li class="flex gap-2"><span class="text-subtle tabular-nums shrink-0">2.</span><span>时间范围选择 <span class="font-medium text-primary">30d</span></span></li>
+        <li class="flex gap-2"><span class="text-subtle tabular-nums shrink-0">3.</span><span>点击 <span class="font-medium text-primary">Export CSV</span>，再将文件拖入此处</span></li>
+      </ol>
       <button type="button" class="inline-flex items-center justify-center min-w-[112px] h-9 px-4 border-0 rounded bg-accent text-white font-medium cursor-pointer transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:shadow-focus disabled:opacity-50 disabled:cursor-not-allowed" id="pickBtn">选择 CSV</button>
       <input class="hidden" id="fileInput" type="file" accept=".csv,text/csv" />
     </section>
@@ -132,9 +136,35 @@
       </div>
       <p class="meta-row m-0 mb-6 text-subtle text-xs tabular-nums" id="metaRow"></p>
 
+      <section class="section mb-7" id="usageSection" aria-labelledby="usageHeading">
+        <div class="section-head flex items-center justify-between gap-3 mb-2.5 flex-wrap">
+          <h2 class="m-0 text-[15px] font-semibold" id="usageHeading">Token 用量</h2>
+          <span class="note text-subtle text-xs">按 Token 数量统计，与上方花费无关</span>
+        </div>
+        <div class="usage-panel px-[18px] py-4 bg-surface border border-border rounded-lg">
+          <p class="usage-insight m-0 mb-3 text-sm font-medium leading-normal" id="usageInsight"></p>
+          <p class="usage-anchors m-0 mb-4 text-secondary text-[13px] tabular-nums" id="usageAnchors"></p>
+
+          <div class="usage-chart-block mb-5">
+            <p class="usage-chart-title m-0 mb-2.5 text-secondary text-xs font-medium">模型 Token 份额</p>
+            <div class="usage-chart-host" id="modelTokenChartHost" role="img" aria-label="模型 Token 份额"></div>
+          </div>
+
+          <div class="usage-chart-block mb-5">
+            <p class="usage-chart-title m-0 mb-2.5 text-secondary text-xs font-medium">Token 类型构成</p>
+            <div class="usage-chart-host" id="tokenMixChartHost" role="img" aria-label="Token 类型构成"></div>
+          </div>
+
+          <div class="usage-chart-block">
+            <p class="usage-chart-title m-0 mb-2.5 text-secondary text-xs font-medium">偏好对比（事件 vs Token）</p>
+            <div class="usage-chart-host" id="prefCompareChartHost" role="img" aria-label="事件与 Token 偏好对比"></div>
+          </div>
+        </div>
+      </section>
+
       <div class="section mb-7">
         <div class="section-head flex items-center justify-between gap-3 mb-2.5 flex-wrap">
-          <h2 class="m-0 text-[15px] font-semibold">按日花费</h2>
+          <h2 class="m-0 text-[15px] font-semibold">花费趋势</h2>
           <div class="segmented inline-flex p-0.5 bg-muted rounded border border-border" id="chartMetric" role="group" aria-label="趋势指标">
             <button type="button" data-metric="cost" class="is-active h-7 px-3 border-0 rounded-sm bg-transparent text-secondary text-xs font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:shadow-focus">花费</button>
             <button type="button" data-metric="events" class="h-7 px-3 border-0 rounded-sm bg-transparent text-secondary text-xs font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:shadow-focus">事件</button>
@@ -142,16 +172,26 @@
           </div>
         </div>
         <div class="chart-panel px-4 pt-4 pb-2 bg-surface border border-border rounded-lg">
-          <div class="chart-legend flex items-center gap-4 mb-2 text-secondary text-xs is-hidden" id="chartLegend">
-            <span class="legend-item inline-flex items-center gap-1.5">
-              <span class="legend-swatch fp w-2.5 h-2.5 rounded-sm shrink-0"></span>第一方模型
-            </span>
-            <span class="legend-item inline-flex items-center gap-1.5">
-              <span class="legend-swatch api w-2.5 h-2.5 rounded-sm shrink-0"></span>API
-            </span>
+          <div class="trend-toolbar flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div class="chart-legend flex items-center gap-4 text-secondary text-xs is-hidden" id="chartLegend">
+              <span class="legend-item inline-flex items-center gap-1.5">
+                <span class="legend-swatch fp w-2.5 h-2.5 rounded-sm shrink-0"></span>第一方模型
+              </span>
+              <span class="legend-item inline-flex items-center gap-1.5">
+                <span class="legend-swatch api w-2.5 h-2.5 rounded-sm shrink-0"></span>API
+              </span>
+            </div>
+            <button type="button" class="text-btn is-hidden h-7 px-2 border-0 rounded-sm bg-transparent text-accent text-xs font-medium cursor-pointer transition-colors hover:bg-accent-soft focus-visible:outline-none focus-visible:shadow-focus" id="clearSelection">清除</button>
           </div>
-          <div id="chartHost"></div>
-          <p class="note m-0 mt-1 mb-2 text-subtle text-xs">按本地时区聚合日期；花费视图按用量池堆叠</p>
+          <div class="trend-stage relative" id="trendStage" tabindex="0" role="group" aria-label="花费趋势图表">
+            <div class="trend-chart-label text-subtle text-xs mb-1">累计趋势</div>
+            <div id="cumulativeChartHost"></div>
+            <div class="trend-chart-label text-subtle text-xs mt-3 mb-1">按日花费</div>
+            <div id="dailyChartHost"></div>
+            <div class="chart-crosshair is-hidden" id="chartCrosshair" aria-hidden="true"></div>
+            <div class="chart-tip is-hidden" id="chartTip" role="tooltip"></div>
+          </div>
+          <p class="note m-0 mt-1 mb-2 text-subtle text-xs">按本地时区聚合日期；悬停或点击日期查看明细</p>
         </div>
       </div>
 
@@ -175,14 +215,14 @@
           <table class="w-full border-collapse text-[13px]" id="modelTable">
             <thead id="modelThead">
               <tr>
-                <th class="sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-left whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted">提供商</th>
-                <th class="sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-left whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted">价表模型</th>
-                <th class="sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-left whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted">匹配方式</th>
-                <th class="sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-left whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted">用量池</th>
-                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">事件</th>
-                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">估算花费</th>
-                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">花费占比</th>
-                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">单次均价</th>
+                <th class="th-base">提供商</th>
+                <th class="th-base">价表模型</th>
+                <th class="th-base">匹配方式</th>
+                <th class="th-base">用量池</th>
+                <th class="num th-base">事件</th>
+                <th class="num th-base">估算花费</th>
+                <th class="num th-base">花费占比</th>
+                <th class="num th-base">单次均价</th>
               </tr>
             </thead>
             <tbody id="modelBody"></tbody>
@@ -200,12 +240,12 @@
           <table class="w-full border-collapse text-[13px]">
             <thead>
               <tr>
-                <th class="sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-left whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted">CSV 模型</th>
-                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">事件</th>
-                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">输入</th>
-                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">缓存写入</th>
-                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">缓存读取</th>
-                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">输出</th>
+                <th class="th-base">CSV 模型</th>
+                <th class="num th-base">事件</th>
+                <th class="num th-base">输入</th>
+                <th class="num th-base">缓存写入</th>
+                <th class="num th-base">缓存读取</th>
+                <th class="num th-base">输出</th>
               </tr>
             </thead>
             <tbody id="unmatchedBody"></tbody>

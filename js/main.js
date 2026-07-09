@@ -4,16 +4,19 @@ import { parseCsv } from "./csv.js";
 import { aggregate } from "./aggregate.js";
 import {
   render,
-  renderDailyChart,
-  renderModels,
+  renderTrendCharts,
   syncModelViewUi,
   setUploadCompact,
   getModelView,
-  setModelView
+  setModelView,
+  bindTrendChartEvents
 } from "./render.js";
 
 let currentSummary = null;
-let currentChartMetric = "cost";
+let trendState = {
+  metric: "cost",
+  selectedDate: null
+};
 
 function showError(message) {
   const bar = document.getElementById("errorBar");
@@ -55,6 +58,14 @@ function setLoading(loading) {
   replaceBtn.textContent = replaceLabel;
 }
 
+function refreshTrendView() {
+  if (!currentSummary) return;
+  renderTrendCharts(currentSummary, {
+    metric: trendState.metric,
+    selectedDate: trendState.selectedDate
+  });
+}
+
 function handleFile(file) {
   if (!file) return;
   clearError();
@@ -75,7 +86,8 @@ function handleFile(file) {
       }
       const summary = processText(text);
       currentSummary = summary;
-      render(summary, currentChartMetric);
+      trendState.selectedDate = null;
+      render(summary, trendState.metric, trendState);
     } catch (err) {
       document.getElementById("results").classList.remove("is-visible");
       setUploadCompact(false);
@@ -131,7 +143,6 @@ function bindUi() {
     handleFile(file);
   });
 
-  // 结果态也可拖到页面顶部更换
   document.addEventListener("dragover", (e) => {
     if (!currentSummary) return;
     e.preventDefault();
@@ -147,11 +158,15 @@ function bindUi() {
   chartMetric.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-metric]");
     if (!btn || !currentSummary) return;
-    currentChartMetric = btn.getAttribute("data-metric");
+    trendState.metric = btn.getAttribute("data-metric");
     chartMetric.querySelectorAll("button").forEach((b) => {
       b.classList.toggle("is-active", b === btn);
     });
-    renderDailyChart(currentSummary, currentChartMetric);
+    refreshTrendView();
+  });
+
+  bindTrendChartEvents((opts) => {
+    trendState.selectedDate = opts.selectedDate;
   });
 
   const policyToggle = document.getElementById("policyToggle");
@@ -175,8 +190,11 @@ function bindUi() {
     modelViewEl.querySelectorAll("button[data-model-view]").forEach((b) => {
       b.classList.toggle("is-active", b === btn);
     });
-    if (currentSummary) renderModels(currentSummary, { animate: true });
-    else syncModelViewUi(null);
+    if (currentSummary) {
+      render(currentSummary, trendState.metric, trendState, { animateModels: true });
+    } else {
+      syncModelViewUi(null);
+    }
   });
 }
 

@@ -69,10 +69,123 @@
   background: #64748B;
 }
 
+.trend-stage {
+  position: relative;
+  outline: none;
+}
+
+.trend-stage:focus-visible {
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.18);
+  border-radius: 8px;
+}
+
+.trend-chart-label {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
 .chart-svg {
   display: block;
   width: 100%;
-  height: 180px;
+}
+
+.chart-svg-cumulative {
+  height: 200px;
+}
+
+.chart-svg-daily {
+  height: 140px;
+}
+
+.chart-crosshair {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(21, 32, 43, 0.4);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.chart-crosshair.is-hidden {
+  display: none;
+}
+
+.chart-tip {
+  position: absolute;
+  z-index: 3;
+  min-width: 168px;
+  max-width: 280px;
+  padding: 8px 10px;
+  border: 1px solid #D8DEE6;
+  border-radius: 8px;
+  background: #FFFFFF;
+  box-shadow: 0 4px 16px rgba(21, 32, 43, 0.08);
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #15202B;
+  opacity: 1;
+  transition: opacity 120ms ease;
+}
+
+.chart-tip.is-hidden {
+  display: none;
+}
+
+.chart-tip-date {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.chart-tip-row {
+  color: #4A5568;
+}
+
+.chart-tip-row + .chart-tip-row {
+  margin-top: 2px;
+}
+
+.chart-tip-foot {
+  margin-top: 4px;
+  color: #8B95A5;
+  font-size: 11px;
+}
+
+.chart-bar.is-selected {
+  stroke: #15202B;
+  stroke-width: 1.5;
+}
+
+.chart-bar.is-hover {
+  opacity: 0.88;
+}
+
+.chart-hit {
+  fill: transparent;
+  cursor: crosshair;
+}
+
+.text-btn.is-hidden {
+  display: none;
+}
+
+#compositionBars.is-fading,
+#modelTableWrap.is-fading {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .chart-empty {
@@ -128,6 +241,40 @@ tbody tr:hover td {
   background: #F8FAFB;
 }
 
+/* 表格列对齐：不依赖 Tailwind 动态类（CDN 不扫描 JS 插入的 class） */
+.table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-wrap table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 10px 12px;
+  border-bottom: 1px solid #D8DEE6;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4A5568;
+  background: #EEF1F4;
+  white-space: nowrap;
+  vertical-align: middle;
+  text-align: left;
+}
+
+.table-wrap table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #D8DEE6;
+  vertical-align: middle;
+}
+
+.table-wrap table th.num,
+.table-wrap table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 td.cost {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -141,9 +288,10 @@ td.cost {
 }
 
 td.model-name {
-  max-width: 180px;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #modelTableWrap {
@@ -154,30 +302,122 @@ td.model-name {
   opacity: 0;
 }
 
-td.calc-type {
-  color: #4A5568;
+/* —— 计算过程视图 —— */
+#modelTable.view-calc {
+  table-layout: fixed;
 }
 
-tr.calc-group-end td {
+#modelTable.view-calc .col-provider { width: 88px; }
+#modelTable.view-calc .col-model { width: 168px; }
+#modelTable.view-calc .col-type { width: 104px; }
+#modelTable.view-calc .col-usage { width: 112px; }
+#modelTable.view-calc .col-price { width: 120px; }
+#modelTable.view-calc .col-part { width: 100px; }
+#modelTable.view-calc .col-total { width: 96px; }
+
+#modelTable.view-calc tbody td {
+  padding: 6px 12px;
+  border-bottom-color: #EEF1F4;
+}
+
+#modelTable.view-calc tr.calc-group-start td {
+  padding-top: 12px;
+}
+
+#modelTable.view-calc tr.calc-group-end td {
+  padding-bottom: 12px;
   border-bottom: 1px solid #C1CAD6;
 }
 
-tr.calc-note td {
-  padding: 4px 12px 8px;
+#modelTable.view-calc tr.calc-alt td {
+  background: #F8FAFB;
+}
+
+#modelTable.view-calc tr.calc-alt:hover td,
+#modelTable.view-calc tr.calc-row:hover td {
+  background: #F1F5F7;
+}
+
+#modelTable.view-calc td.calc-provider {
+  color: #8B95A5;
+  font-size: 12px;
+  font-weight: 500;
+  vertical-align: middle;
+  border-right: 1px solid #EEF1F4;
+}
+
+#modelTable.view-calc td.calc-model {
+  font-weight: 600;
+  color: #15202B;
+  vertical-align: middle;
+  border-right: 1px solid #EEF1F4;
+  max-width: 168px;
+}
+
+#modelTable.view-calc td.calc-type {
+  color: #4A5568;
+  font-size: 12px;
+}
+
+#modelTable.view-calc td.calc-total {
+  font-size: 14px;
+  font-weight: 600;
+  color: #15202B;
+  vertical-align: middle;
+  border-left: 1px solid #EEF1F4;
+  background: #FAFBFC;
+}
+
+#modelTable.view-calc tr.calc-alt td.calc-total {
+  background: #F4F6F8;
+}
+
+#modelTable.view-calc tr.calc-row:hover td.calc-total,
+#modelTable.view-calc tr.calc-alt:hover td.calc-total {
+  background: #EEF1F4;
+}
+
+#modelTable.view-calc td.calc-zero {
+  color: #8B95A5;
+  font-weight: 400;
+}
+
+#modelTable.view-calc tr.calc-note td {
+  padding: 2px 12px 12px;
   border-bottom: 1px solid #C1CAD6;
   color: #8B95A5;
   font-size: 12px;
+  line-height: 1.4;
+}
+
+#modelTable.view-calc tr.calc-note:hover td {
   background: transparent;
 }
 
-tr.calc-note:hover td {
-  background: transparent;
+#modelTable.view-calc tr.calc-alt.calc-note td {
+  background: #F8FAFB;
+}
+
+#modelTable.view-calc tr.calc-alt.calc-note:hover td {
+  background: #F8FAFB;
+}
+
+#modelTable.view-calc tr.unmatched td {
+  background: #FEF2F2;
+}
+
+#modelTable.view-calc tr.unmatched:hover td {
+  background: #FEE2E2;
+}
+
+#modelTable.view-calc tr.unmatched td.calc-total {
+  background: #FEF2F2;
 }
 
 .price-hint {
   margin-left: 4px;
   color: #8B95A5;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 400;
 }
 
@@ -244,6 +484,10 @@ tr.calc-note:hover td {
   color: #0F766E;
 }
 
+.segmented.is-hidden {
+  display: none;
+}
+
 .text-btn.is-active {
   background: rgba(15, 118, 110, 0.12);
   color: #115E59;
@@ -251,6 +495,15 @@ tr.calc-note:hover td {
 
 @media (prefers-reduced-motion: reduce) {
   #modelTableWrap {
+    transition: none;
+  }
+
+  #compositionBars.is-fading,
+  #modelTableWrap.is-fading {
+    transition: none;
+  }
+
+  .chart-tip {
     transition: none;
   }
 }
@@ -286,6 +539,258 @@ tr.unmatched:hover td {
 
 @media (prefers-reduced-motion: reduce) {
   .policy-toggle .chevron {
+    transition: none;
+  }
+}
+
+/* Token 用量可视化 */
+.usage-insight {
+  color: #15202B;
+}
+
+.usage-anchors {
+  padding-bottom: 4px;
+  border-bottom: 1px solid #D8DEE6;
+}
+
+.usage-chart-block:last-child {
+  margin-bottom: 0;
+}
+
+.usage-empty {
+  margin: 0;
+  padding: 20px 0;
+  text-align: center;
+  color: #8B95A5;
+  font-size: 13px;
+}
+
+.usage-hbar {
+  display: grid;
+  grid-template-columns: minmax(88px, 140px) 1fr 52px 64px;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.usage-hbar + .usage-hbar {
+  border-top: 1px solid #EEF1F4;
+}
+
+.usage-hbar-label {
+  font-size: 13px;
+  color: #15202B;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.usage-hbar-track {
+  height: 8px;
+  background: #EEF1F4;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.usage-hbar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #0F766E;
+  transform-origin: left center;
+}
+
+.usage-hbar-pct,
+.usage-hbar-val {
+  text-align: right;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.usage-hbar-val {
+  color: #4A5568;
+}
+
+.usage-stack {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #EEF1F4;
+}
+
+.usage-stack-seg {
+  height: 100%;
+  min-width: 0;
+  background: #0F766E;
+}
+
+.usage-stack-seg.t2 {
+  background: rgba(15, 118, 110, 0.72);
+}
+
+.usage-stack-seg.t3 {
+  background: rgba(15, 118, 110, 0.48);
+}
+
+.usage-stack-seg.t4 {
+  background: rgba(15, 118, 110, 0.28);
+}
+
+.usage-stack-legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin-top: 12px;
+}
+
+.usage-stack-legend-item {
+  display: grid;
+  grid-template-columns: 10px 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: #4A5568;
+}
+
+.usage-stack-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: #0F766E;
+  flex-shrink: 0;
+}
+
+.usage-stack-swatch.t2 {
+  background: rgba(15, 118, 110, 0.72);
+}
+
+.usage-stack-swatch.t3 {
+  background: rgba(15, 118, 110, 0.48);
+}
+
+.usage-stack-swatch.t4 {
+  background: rgba(15, 118, 110, 0.28);
+}
+
+.usage-stack-legend-val {
+  color: #15202B;
+  font-size: 12px;
+}
+
+.usage-stack-legend-pct {
+  color: #8B95A5;
+  font-size: 12px;
+  min-width: 40px;
+  text-align: right;
+}
+
+.usage-pref-row {
+  display: grid;
+  grid-template-columns: minmax(88px, 140px) 1fr;
+  gap: 8px 12px;
+  align-items: start;
+  padding: 8px 0;
+}
+
+.usage-pref-row + .usage-pref-row {
+  border-top: 1px solid #EEF1F4;
+}
+
+.usage-pref-name {
+  font-size: 13px;
+  color: #15202B;
+  padding-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.usage-pref-tracks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.usage-pref-track {
+  display: grid;
+  grid-template-columns: 40px 1fr 48px;
+  gap: 8px;
+  align-items: center;
+}
+
+.usage-pref-track-label {
+  font-size: 11px;
+  color: #8B95A5;
+}
+
+.usage-pref-track-bar {
+  height: 6px;
+  background: #EEF1F4;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.usage-pref-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.usage-pref-fill.event {
+  background: #64748B;
+}
+
+.usage-pref-fill.token {
+  background: #0F766E;
+}
+
+.usage-pref-pct {
+  text-align: right;
+  font-size: 12px;
+  color: #4A5568;
+}
+
+@media (max-width: 640px) {
+  .usage-hbar {
+    grid-template-columns: minmax(72px, 1fr) 52px;
+    grid-template-rows: auto auto;
+  }
+
+  .usage-hbar-label {
+    grid-column: 1 / -1;
+  }
+
+  .usage-hbar-track {
+    grid-column: 1;
+  }
+
+  .usage-hbar-pct {
+    grid-column: 2;
+  }
+
+  .usage-hbar-val {
+    grid-column: 1 / -1;
+    text-align: left;
+    font-size: 12px;
+    color: #8B95A5;
+  }
+
+  .usage-stack-legend {
+    grid-template-columns: 1fr;
+  }
+
+  .usage-pref-row {
+    grid-template-columns: 1fr;
+  }
+
+  .usage-pref-name {
+    padding-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .usage-hbar-fill,
+  .usage-pref-fill,
+  .usage-stack-seg {
     transition: none;
   }
 }
