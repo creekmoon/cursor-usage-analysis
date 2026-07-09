@@ -4,797 +4,208 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cursor 用量花费估算</title>
-  <style>
-    :root {
-      --bg-page: #F4F6F8;
-      --bg-surface: #FFFFFF;
-      --bg-muted: #EEF1F4;
-      --text-primary: #15202B;
-      --text-secondary: #4A5568;
-      --text-muted: #8B95A5;
-      --border: #D8DEE6;
-      --border-strong: #C1CAD6;
-      --accent: #0F766E;
-      --accent-hover: #0D9488;
-      --accent-soft: rgba(15, 118, 110, 0.12);
-      --accent-deep: #115E59;
-      --chart-1: #0F766E;
-      --chart-2: rgba(15, 118, 110, 0.72);
-      --chart-3: rgba(15, 118, 110, 0.48);
-      --chart-4: rgba(15, 118, 110, 0.28);
-      --chart-fp: #0F766E;
-      --chart-api: #64748B;
-      --danger: #B91C1C;
-      --danger-bg: #FEF2F2;
-      --warning: #B45309;
-      --warning-bg: #FFFBEB;
-      --radius-sm: 4px;
-      --radius-md: 8px;
-      --radius-lg: 12px;
-      --shadow-focus: 0 0 0 3px rgba(15, 118, 110, 0.18);
-      --font: system-ui, -apple-system, "Segoe UI", "PingFang SC",
-        "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: var(--font);
-      font-size: 14px;
-      line-height: 1.5;
-      color: var(--text-primary);
-      background:
-        linear-gradient(180deg, #E8EEF2 0%, var(--bg-page) 180px),
-        var(--bg-page);
-    }
-
-    .page {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 32px 24px 64px;
-    }
-
-    .topbar {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .topbar-text { min-width: 0; flex: 1; }
-
-    .topbar h1 {
-      margin: 0 0 6px;
-      font-size: 24px;
-      font-weight: 600;
-      line-height: 1.25;
-      letter-spacing: -0.01em;
-    }
-
-    .topbar-lead {
-      margin: 0 0 6px;
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-
-    .policy-toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 0;
-      border: none;
-      background: none;
-      color: var(--accent);
-      font: inherit;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-    }
-
-    .policy-toggle:hover { text-decoration: underline; }
-
-    .policy-toggle:focus-visible {
-      outline: none;
-      box-shadow: var(--shadow-focus);
-      border-radius: 2px;
-    }
-
-    .policy-toggle .chevron {
-      display: inline-block;
-      font-size: 10px;
-      transition: transform 160ms ease;
-    }
-
-    .policy-toggle[aria-expanded="true"] .chevron {
-      transform: rotate(180deg);
-    }
-
-    .policy-panel {
-      display: none;
-      margin-top: 8px;
-      padding: 12px 14px;
-      background: var(--bg-muted);
-      border-radius: var(--radius-sm);
-      color: var(--text-secondary);
-      font-size: 12px;
-      line-height: 1.55;
-    }
-
-    .policy-panel.is-open { display: block; }
-
-    .policy-panel a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    .policy-panel a:hover { text-decoration: underline; }
-
-    .topbar-actions {
-      display: none;
-      flex-shrink: 0;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .topbar-actions.is-visible { display: flex; }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 112px;
-      height: 36px;
-      padding: 0 16px;
-      border: none;
-      border-radius: var(--radius-sm);
-      background: var(--accent);
-      color: #fff;
-      font: inherit;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 160ms ease;
-    }
-
-    .btn:hover { background: var(--accent-hover); }
-
-    .btn:focus-visible {
-      outline: none;
-      box-shadow: var(--shadow-focus);
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .btn-secondary {
-      min-width: 96px;
-      background: var(--bg-surface);
-      color: var(--text-primary);
-      border: 1px solid var(--border-strong);
-    }
-
-    .btn-secondary:hover {
-      background: var(--bg-muted);
-    }
-
-    .file-input { display: none; }
-
-    .upload {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      min-height: 148px;
-      padding: 28px 24px;
-      background: var(--bg-surface);
-      border: 1px dashed var(--border-strong);
-      border-radius: var(--radius-lg);
-      transition: border-color 180ms ease, background-color 180ms ease;
-    }
-
-    .upload.is-dragover {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-    }
-
-    .upload.is-compact {
-      display: none;
-    }
-
-    .upload-title {
-      margin: 0;
-      font-size: 15px;
-      font-weight: 500;
-    }
-
-    .upload-hint {
-      margin: 0;
-      color: var(--text-muted);
-      font-size: 13px;
-    }
-
-    .error-bar {
-      display: none;
-      margin-top: 16px;
-      padding: 12px 14px;
-      border: 1px solid #FECACA;
-      border-radius: var(--radius-md);
-      background: var(--danger-bg);
-      color: var(--danger);
-      font-size: 13px;
-    }
-
-    .error-bar.is-visible { display: block; }
-
-    .results { display: none; margin-top: 24px; }
-    .results.is-visible { display: block; }
-
-    .insight {
-      margin-bottom: 16px;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
-      color: var(--text-primary);
-      font-size: 14px;
-      font-weight: 500;
-      line-height: 1.5;
-    }
-
-    .insight .muted {
-      color: var(--text-muted);
-      font-weight: 400;
-      font-size: 13px;
-    }
-
-    .metrics {
-      margin-bottom: 8px;
-      padding: 16px 18px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-    }
-
-    .metric-main {
-      margin-bottom: 14px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .metric-pools {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px 24px;
-      margin-bottom: 14px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .metric-aux {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px 20px;
-    }
-
-    .metric-label {
-      margin: 0 0 6px;
-      color: var(--text-secondary);
-      font-size: 12px;
-    }
-
-    .metric-value {
-      margin: 0;
-      font-weight: 600;
-      line-height: 1.2;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.02em;
-    }
-
-    .metric-main .metric-value {
-      font-size: 30px;
-    }
-
-    .metric-pools .metric-value {
-      font-size: 18px;
-    }
-
-    .metric-aux .metric-value {
-      font-size: 16px;
-    }
-
-    .metric-value-row {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .metric-share {
-      color: var(--text-secondary);
-      font-size: 13px;
-      font-weight: 500;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .metric-hint {
-      margin: 4px 0 0;
-      color: var(--text-muted);
-      font-size: 12px;
-      font-weight: 400;
-    }
-
-    .badge.pool-fp { background: #ECFDF5; color: #047857; }
-    .badge.pool-api { background: var(--bg-muted); color: var(--text-secondary); }
-    .badge.pool-unknown { background: var(--warning-bg); color: var(--warning); }
-
-    .meta-row {
-      margin: 0 0 24px;
-      color: var(--text-muted);
-      font-size: 12px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .section {
-      margin-bottom: 28px;
-    }
-
-    .section-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin: 0 0 10px;
-      flex-wrap: wrap;
-    }
-
-    .section-head h2 {
-      margin: 0;
-      font-size: 15px;
-      font-weight: 600;
-    }
-
-    .section-head .note {
-      color: var(--text-muted);
-      font-size: 12px;
-    }
-
-    .segmented {
-      display: inline-flex;
-      padding: 2px;
-      background: var(--bg-muted);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-    }
-
-    .segmented button {
-      height: 28px;
-      padding: 0 12px;
-      border: none;
-      border-radius: 2px;
-      background: transparent;
-      color: var(--text-secondary);
-      font: inherit;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 160ms ease, color 160ms ease;
-    }
-
-    .segmented button.is-active {
-      background: var(--bg-surface);
-      color: var(--accent);
-    }
-
-    .segmented button:focus-visible {
-      outline: none;
-      box-shadow: var(--shadow-focus);
-    }
-
-    .chart-panel {
-      padding: 16px 16px 8px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-    }
-
-    .chart-legend {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin: 0 0 8px;
-      color: var(--text-secondary);
-      font-size: 12px;
-    }
-
-    .chart-legend.is-hidden { display: none; }
-
-    .legend-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .legend-swatch {
-      width: 10px;
-      height: 10px;
-      border-radius: 2px;
-      flex-shrink: 0;
-    }
-
-    .legend-swatch.fp { background: var(--chart-fp); }
-    .legend-swatch.api { background: var(--chart-api); }
-
-    .chart-svg {
-      display: block;
-      width: 100%;
-      height: 180px;
-    }
-
-    .text-btn {
-      height: 28px;
-      padding: 0 8px;
-      border: none;
-      border-radius: var(--radius-sm);
-      background: transparent;
-      color: var(--accent);
-      font: inherit;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-    }
-
-    .text-btn:hover { background: var(--accent-soft); }
-
-    .text-btn:focus-visible {
-      outline: none;
-      box-shadow: var(--shadow-focus);
-    }
-
-    .text-btn.is-active {
-      background: var(--accent-soft);
-      color: var(--accent-deep);
-    }
-
-    th.token-col,
-    td.token-col {
-      display: none;
-    }
-
-    table.show-tokens th.token-col,
-    table.show-tokens td.token-col {
-      display: table-cell;
-    }
-
-    td.model-name {
-      max-width: 180px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .chart-empty {
-      margin: 0;
-      padding: 48px 16px;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 13px;
-    }
-
-    .bars {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      padding: 16px 18px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-    }
-
-    .bar-row {
-      display: grid;
-      grid-template-columns: 72px 1fr 72px 52px;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .bar-label {
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-
-    .bar-track {
-      height: 8px;
-      background: var(--bg-muted);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .bar-fill {
-      height: 100%;
-      border-radius: 999px;
-      background: var(--chart-1);
-    }
-
-    .bar-fill.t2 { background: var(--chart-2); }
-    .bar-fill.t3 { background: var(--chart-3); }
-    .bar-fill.t4 { background: var(--chart-4); }
-
-    .bar-row .num {
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-      font-size: 13px;
-    }
-
-    .bar-row .share {
-      color: var(--text-secondary);
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    th, td {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-      text-align: left;
-      white-space: nowrap;
-      vertical-align: middle;
-    }
-
-    th {
-      position: sticky;
-      top: 0;
-      z-index: 1;
-      color: var(--text-secondary);
-      font-size: 12px;
-      font-weight: 500;
-      background: var(--bg-muted);
-    }
-
-    tbody tr:last-child td { border-bottom: none; }
-
-    tbody tr:hover td { background: #F8FAFB; }
-
-    td.num, th.num {
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
-
-    td.cost {
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-    }
-
-    tr.unmatched td { background: var(--danger-bg); }
-    tr.unmatched:hover td { background: #FEE2E2; }
-
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: var(--radius-sm);
-      font-size: 12px;
-      font-weight: 500;
-      background: var(--bg-muted);
-      color: var(--text-secondary);
-    }
-
-    .badge.exact { background: #ECFDF5; color: #047857; }
-    .badge.fuzzy { background: var(--warning-bg); color: var(--warning); }
-    .badge.miss { background: var(--danger-bg); color: var(--danger); }
-
-    .unmatched-block { display: none; }
-    .unmatched-block.is-visible { display: block; }
-
-    .empty-note {
-      margin: 0;
-      padding: 20px 16px;
-      color: var(--text-muted);
-      font-size: 13px;
-      text-align: center;
-    }
-
-    @media (max-width: 900px) {
-      .metric-aux {
-        grid-template-columns: 1fr 1fr;
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            page: "#F4F6F8",
+            surface: "#FFFFFF",
+            muted: "#EEF1F4",
+            primary: "#15202B",
+            secondary: "#4A5568",
+            subtle: "#8B95A5",
+            border: "#D8DEE6",
+            "border-strong": "#C1CAD6",
+            accent: {
+              DEFAULT: "#0F766E",
+              hover: "#0D9488",
+              soft: "rgba(15, 118, 110, 0.12)",
+              deep: "#115E59"
+            },
+            danger: {
+              DEFAULT: "#B91C1C",
+              bg: "#FEF2F2"
+            }
+          },
+          fontFamily: {
+            sans: [
+              "system-ui",
+              "-apple-system",
+              "Segoe UI",
+              "PingFang SC",
+              "Hiragino Sans GB",
+              "Microsoft YaHei",
+              "Noto Sans SC",
+              "sans-serif"
+            ]
+          },
+          boxShadow: {
+            focus: "0 0 0 3px rgba(15, 118, 110, 0.18)"
+          }
+        }
       }
-      .bar-row {
-        grid-template-columns: 64px 1fr 64px 48px;
-        gap: 8px;
-      }
-    }
-
-    @media (max-width: 560px) {
-      .page { padding: 20px 16px 48px; }
-      .topbar { flex-direction: column; }
-      .topbar h1 { font-size: 20px; }
-      .metric-pools { grid-template-columns: 1fr; }
-      .metric-aux { grid-template-columns: 1fr 1fr; }
-      .metric-main .metric-value { font-size: 26px; }
-      .bar-row {
-        grid-template-columns: 56px 1fr;
-        gap: 6px 8px;
-      }
-      .bar-row .num,
-      .bar-row .share {
-        grid-column: 2;
-        text-align: left;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .btn, .upload, .segmented button, .policy-toggle .chevron, .text-btn {
-        transition: none;
-      }
-    }
-  </style>
+    };
+  </script>
+  <link rel="stylesheet" href="./css/app.css" />
 </head>
-<body>
-  <div class="page">
-    <div class="topbar">
-      <div class="topbar-text">
-        <h1>Cursor 用量花费估算</h1>
-        <p class="topbar-lead">解析 usage-events CSV，按官方价表估算理论花费（$/1M tokens）。</p>
-        <button type="button" class="policy-toggle" id="policyToggle" aria-expanded="false" aria-controls="policyPanel">
+<body class="min-h-screen bg-page text-sm leading-normal text-primary font-sans bg-gradient-to-b from-[#E8EEF2] from-0% via-page via-[180px] to-page">
+  <div class="max-w-[1180px] mx-auto px-6 py-8 pb-16 max-sm:px-4 max-sm:py-5 max-sm:pb-12">
+    <div class="flex items-start justify-between gap-4 mb-5 max-sm:flex-col">
+      <div class="min-w-0 flex-1">
+        <h1 class="m-0 mb-1.5 text-2xl font-semibold leading-tight tracking-tight max-sm:text-xl">Cursor 用量花费估算</h1>
+        <p class="m-0 mb-1.5 text-secondary text-[13px]">解析 usage-events CSV，按官方价表估算理论花费（$/1M tokens）。</p>
+        <button type="button" class="policy-toggle inline-flex items-center gap-1 p-0 border-0 bg-transparent text-accent text-[13px] font-medium cursor-pointer hover:underline focus-visible:outline-none focus-visible:shadow-focus focus-visible:rounded-sm" id="policyToggle" aria-expanded="false" aria-controls="policyPanel">
           计费说明 <span class="chevron" aria-hidden="true">▾</span>
         </button>
-        <div class="policy-panel" id="policyPanel" hidden>
+        <div class="policy-panel mt-2 px-3.5 py-3 bg-muted rounded text-secondary text-xs leading-relaxed" id="policyPanel" hidden>
           用量分「第一方模型」与「API」两个用量池，额度互不共用。
-          价表中缓存写入为「-」时，按与输入同价计费；Auto 为「Input + Cache Write」合并计价。
           本页为价表估算，非官方账单；团队方案第三方另收 Cursor Token 费率（$0.25/1M tokens），本页未计入。
           价表来源：
-          <a href="https://cursor.com/cn/docs/models-and-pricing" target="_blank" rel="noopener noreferrer">模型与价格</a>
+          <a href="https://cursor.com/cn/docs/models-and-pricing" target="_blank" rel="noopener noreferrer" class="text-accent no-underline hover:underline">模型与价格</a>
           ·
-          <a href="https://cursor.com/docs/models/cursor-composer-2-5" target="_blank" rel="noopener noreferrer">Composer 2.5 Fast</a>
+          <a href="https://cursor.com/docs/models/cursor-composer-2-5" target="_blank" rel="noopener noreferrer" class="text-accent no-underline hover:underline">Composer 2.5 Fast</a>
           （2026-07-09）
         </div>
       </div>
-      <div class="topbar-actions" id="topbarActions">
-        <button type="button" class="btn btn-secondary" id="replaceBtn">更换 CSV</button>
+      <div class="topbar-actions shrink-0 items-center gap-2" id="topbarActions">
+        <button type="button" class="inline-flex items-center justify-center min-w-[96px] h-9 px-4 border border-border-strong rounded bg-surface text-primary font-medium cursor-pointer transition-colors hover:bg-muted focus-visible:outline-none focus-visible:shadow-focus disabled:opacity-50 disabled:cursor-not-allowed" id="replaceBtn">更换 CSV</button>
       </div>
     </div>
 
-    <section class="upload" id="uploadZone" aria-label="上传 CSV">
-      <p class="upload-title">拖入 usage-events CSV，或点击选择</p>
-      <p class="upload-hint">导入后显示趋势、花费构成与模型汇总。文件仅在本地解析。</p>
-      <button type="button" class="btn" id="pickBtn">选择 CSV</button>
-      <input class="file-input" id="fileInput" type="file" accept=".csv,text/csv" />
+    <section class="upload flex flex-col items-center justify-center gap-3 min-h-[148px] px-6 py-7 bg-surface border border-dashed border-border-strong rounded-xl transition-colors" id="uploadZone" aria-label="上传 CSV">
+      <p class="upload-title m-0 text-[15px] font-medium">拖入 usage-events CSV，或点击选择</p>
+      <p class="upload-hint m-0 text-subtle text-[13px]">导入后显示趋势、花费构成与模型汇总。文件仅在本地解析。</p>
+      <button type="button" class="inline-flex items-center justify-center min-w-[112px] h-9 px-4 border-0 rounded bg-accent text-white font-medium cursor-pointer transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:shadow-focus disabled:opacity-50 disabled:cursor-not-allowed" id="pickBtn">选择 CSV</button>
+      <input class="hidden" id="fileInput" type="file" accept=".csv,text/csv" />
     </section>
 
-    <div class="error-bar" id="errorBar" role="alert"></div>
+    <div class="error-bar mt-4 px-3.5 py-3 border border-red-200 rounded-lg bg-danger-bg text-danger text-[13px]" id="errorBar" role="alert"></div>
 
-    <section class="results" id="results">
-      <div class="insight" id="insight"></div>
+    <section class="results mt-6" id="results">
+      <div class="insight mb-4 py-3 border-b border-border text-sm font-medium leading-normal" id="insight"></div>
 
-      <div class="metrics">
-        <div class="metric-main">
-          <p class="metric-label">估算总花费</p>
-          <p class="metric-value" id="metricTotal">$0.00</p>
+      <div class="metrics mb-2 px-[18px] py-4 bg-surface border border-border rounded-lg">
+        <div class="metric-main mb-3.5 pb-3.5 border-b border-border">
+          <p class="metric-label m-0 mb-1.5 text-secondary text-xs">估算总花费</p>
+          <p class="metric-value m-0 font-semibold leading-tight tabular-nums tracking-tight text-[30px] max-sm:text-[26px]" id="metricTotal">$0.00</p>
         </div>
-        <div class="metric-pools">
+        <div class="metric-pools grid grid-cols-2 gap-x-6 gap-y-3 mb-3.5 pb-3.5 border-b border-border max-sm:grid-cols-1">
           <div>
-            <p class="metric-label">第一方模型用量池</p>
-            <div class="metric-value-row">
-              <p class="metric-value" id="metricPoolFp">$0.00</p>
-              <span class="metric-share" id="metricPoolFpShare">0%</span>
+            <p class="metric-label m-0 mb-1.5 text-secondary text-xs">第一方模型用量池</p>
+            <div class="metric-value-row flex items-baseline gap-2 flex-wrap">
+              <p class="metric-value m-0 text-lg font-semibold tabular-nums tracking-tight" id="metricPoolFp">$0.00</p>
+              <span class="metric-share text-secondary text-[13px] font-medium tabular-nums" id="metricPoolFpShare">0%</span>
             </div>
-            <p class="metric-hint">Auto / Composer / Grok 4.5</p>
+            <p class="metric-hint m-0 mt-1 text-subtle text-xs font-normal">Auto / Composer / Grok 4.5</p>
           </div>
           <div>
-            <p class="metric-label">API 用量池</p>
-            <div class="metric-value-row">
-              <p class="metric-value" id="metricPoolApi">$0.00</p>
-              <span class="metric-share" id="metricPoolApiShare">0%</span>
+            <p class="metric-label m-0 mb-1.5 text-secondary text-xs">API 用量池</p>
+            <div class="metric-value-row flex items-baseline gap-2 flex-wrap">
+              <p class="metric-value m-0 text-lg font-semibold tabular-nums tracking-tight" id="metricPoolApi">$0.00</p>
+              <span class="metric-share text-secondary text-[13px] font-medium tabular-nums" id="metricPoolApiShare">0%</span>
             </div>
-            <p class="metric-hint">按模型 API 价格计费</p>
+            <p class="metric-hint m-0 mt-1 text-subtle text-xs font-normal">按模型 API 价格计费</p>
           </div>
         </div>
-        <div class="metric-aux">
+        <div class="metric-aux grid grid-cols-4 gap-x-5 gap-y-3 max-lg:grid-cols-2 max-sm:grid-cols-2">
           <div>
-            <p class="metric-label">日均花费</p>
-            <p class="metric-value" id="metricDailyAvg">$0.00</p>
+            <p class="metric-label m-0 mb-1.5 text-secondary text-xs">日均花费</p>
+            <p class="metric-value m-0 text-base font-semibold tabular-nums tracking-tight" id="metricDailyAvg">$0.00</p>
           </div>
           <div>
-            <p class="metric-label">单次均价</p>
-            <p class="metric-value" id="metricEventAvg">$0.00</p>
+            <p class="metric-label m-0 mb-1.5 text-secondary text-xs">单次均价</p>
+            <p class="metric-value m-0 text-base font-semibold tabular-nums tracking-tight" id="metricEventAvg">$0.00</p>
           </div>
           <div>
-            <p class="metric-label">缓存读取花费占比</p>
-            <p class="metric-value" id="metricCacheShare">0%</p>
-            <p class="metric-hint">缓存读取花费 / 估算总花费</p>
+            <p class="metric-label m-0 mb-1.5 text-secondary text-xs">缓存读取花费占比</p>
+            <p class="metric-value m-0 text-base font-semibold tabular-nums tracking-tight" id="metricCacheShare">0%</p>
+            <p class="metric-hint m-0 mt-1 text-subtle text-xs font-normal">缓存读取花费 / 估算总花费</p>
           </div>
           <div>
-            <p class="metric-label">Max Mode 花费占比</p>
-            <p class="metric-value" id="metricMaxShare">0%</p>
-            <p class="metric-hint">Max Mode 事件的估算花费</p>
+            <p class="metric-label m-0 mb-1.5 text-secondary text-xs">Max Mode 花费占比</p>
+            <p class="metric-value m-0 text-base font-semibold tabular-nums tracking-tight" id="metricMaxShare">0%</p>
+            <p class="metric-hint m-0 mt-1 text-subtle text-xs font-normal">Max Mode 事件的估算花费</p>
           </div>
         </div>
       </div>
-      <p class="meta-row" id="metaRow"></p>
+      <p class="meta-row m-0 mb-6 text-subtle text-xs tabular-nums" id="metaRow"></p>
 
-      <div class="section">
-        <div class="section-head">
-          <h2>按日花费</h2>
-          <div class="segmented" id="chartMetric" role="group" aria-label="趋势指标">
-            <button type="button" data-metric="cost" class="is-active">花费</button>
-            <button type="button" data-metric="events">事件</button>
-            <button type="button" data-metric="tokens">Token 数</button>
+      <div class="section mb-7">
+        <div class="section-head flex items-center justify-between gap-3 mb-2.5 flex-wrap">
+          <h2 class="m-0 text-[15px] font-semibold">按日花费</h2>
+          <div class="segmented inline-flex p-0.5 bg-muted rounded border border-border" id="chartMetric" role="group" aria-label="趋势指标">
+            <button type="button" data-metric="cost" class="is-active h-7 px-3 border-0 rounded-sm bg-transparent text-secondary text-xs font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:shadow-focus">花费</button>
+            <button type="button" data-metric="events" class="h-7 px-3 border-0 rounded-sm bg-transparent text-secondary text-xs font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:shadow-focus">事件</button>
+            <button type="button" data-metric="tokens" class="h-7 px-3 border-0 rounded-sm bg-transparent text-secondary text-xs font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:shadow-focus">Token 数</button>
           </div>
         </div>
-        <div class="chart-panel">
-          <div class="chart-legend is-hidden" id="chartLegend">
-            <span class="legend-item"><span class="legend-swatch fp"></span>第一方模型</span>
-            <span class="legend-item"><span class="legend-swatch api"></span>API</span>
+        <div class="chart-panel px-4 pt-4 pb-2 bg-surface border border-border rounded-lg">
+          <div class="chart-legend flex items-center gap-4 mb-2 text-secondary text-xs is-hidden" id="chartLegend">
+            <span class="legend-item inline-flex items-center gap-1.5">
+              <span class="legend-swatch fp w-2.5 h-2.5 rounded-sm shrink-0"></span>第一方模型
+            </span>
+            <span class="legend-item inline-flex items-center gap-1.5">
+              <span class="legend-swatch api w-2.5 h-2.5 rounded-sm shrink-0"></span>API
+            </span>
           </div>
           <div id="chartHost"></div>
-          <p class="note" style="margin: 4px 0 8px; color: var(--text-muted); font-size: 12px;">按本地时区聚合日期；花费视图按用量池堆叠</p>
+          <p class="note m-0 mt-1 mb-2 text-subtle text-xs">按本地时区聚合日期；花费视图按用量池堆叠</p>
         </div>
       </div>
 
-      <div class="section">
-        <div class="section-head">
-          <h2>花费构成（按 token 类型）</h2>
-          <span class="note">四类花费之和等于估算总花费</span>
+      <div class="section mb-7">
+        <div class="section-head flex items-center justify-between gap-3 mb-2.5 flex-wrap">
+          <h2 class="m-0 text-[15px] font-semibold">花费构成（按 token 类型）</h2>
+          <span class="note text-subtle text-xs">四类花费之和等于估算总花费</span>
         </div>
-        <div class="bars" id="compositionBars"></div>
+        <div class="bars flex flex-col gap-3 px-[18px] py-4 bg-surface border border-border rounded-lg" id="compositionBars"></div>
       </div>
 
-      <div class="section">
-        <div class="section-head">
-          <h2>按模型汇总</h2>
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <span class="note">默认按估算花费降序</span>
-            <button type="button" class="text-btn" id="tokenColsBtn" aria-pressed="false">显示 Token 明细</button>
+      <div class="section mb-7">
+        <div class="section-head flex items-center justify-between gap-3 mb-2.5 flex-wrap">
+          <h2 class="m-0 text-[15px] font-semibold">按模型汇总</h2>
+          <div class="segmented inline-flex p-0.5 bg-muted rounded border border-border" id="modelView" role="group" aria-label="模型表视图">
+            <button type="button" data-model-view="summary" class="is-active h-7 px-3 border-0 rounded-sm bg-transparent text-secondary text-xs font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:shadow-focus">汇总</button>
+            <button type="button" data-model-view="calc" class="h-7 px-3 border-0 rounded-sm bg-transparent text-secondary text-xs font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:shadow-focus">计算过程</button>
           </div>
         </div>
-        <div class="table-wrap">
-          <table id="modelTable">
-            <thead>
+        <div class="table-wrap overflow-x-auto bg-surface border border-border rounded-lg" id="modelTableWrap">
+          <table class="w-full border-collapse text-[13px]" id="modelTable">
+            <thead id="modelThead">
               <tr>
-                <th>提供商</th>
-                <th>价表模型</th>
-                <th>匹配方式</th>
-                <th>用量池</th>
-                <th class="num">事件</th>
-                <th class="num token-col">输入</th>
-                <th class="num token-col">缓存写入</th>
-                <th class="num token-col">缓存读取</th>
-                <th class="num token-col">输出</th>
-                <th class="num">估算花费</th>
-                <th class="num">花费占比</th>
-                <th class="num">单次均价</th>
+                <th class="sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-left whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted">提供商</th>
+                <th class="sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-left whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted">价表模型</th>
+                <th class="sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-left whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted">匹配方式</th>
+                <th class="sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-left whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted">用量池</th>
+                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">事件</th>
+                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">估算花费</th>
+                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">花费占比</th>
+                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">单次均价</th>
               </tr>
             </thead>
             <tbody id="modelBody"></tbody>
           </table>
         </div>
+        <p class="note m-0 mt-1.5 text-subtle text-xs" id="modelViewNote">按估算花费降序</p>
       </div>
 
-      <div class="section unmatched-block" id="unmatchedBlock">
-        <div class="section-head">
-          <h2>未匹配模型</h2>
-          <span class="note">已计入事件，估算花费记为 $0</span>
+      <div class="section unmatched-block mb-7" id="unmatchedBlock">
+        <div class="section-head flex items-center justify-between gap-3 mb-2.5 flex-wrap">
+          <h2 class="m-0 text-[15px] font-semibold">未匹配模型</h2>
+          <span class="note text-subtle text-xs">已计入事件，估算花费记为 $0</span>
         </div>
-        <div class="table-wrap">
-          <table>
+        <div class="table-wrap overflow-x-auto bg-surface border border-border rounded-lg">
+          <table class="w-full border-collapse text-[13px]">
             <thead>
               <tr>
-                <th>CSV 模型</th>
-                <th class="num">事件</th>
-                <th class="num">输入</th>
-                <th class="num">缓存写入</th>
-                <th class="num">缓存读取</th>
-                <th class="num">输出</th>
+                <th class="sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-left whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted">CSV 模型</th>
+                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">事件</th>
+                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">输入</th>
+                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">缓存写入</th>
+                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">缓存读取</th>
+                <th class="num sticky top-0 z-[1] px-3 py-2.5 border-b border-border text-right whitespace-nowrap align-middle text-secondary text-xs font-medium bg-muted tabular-nums">输出</th>
               </tr>
             </thead>
             <tbody id="unmatchedBody"></tbody>
@@ -804,1009 +215,6 @@
     </section>
   </div>
 
-  <script>
-    const PRICING_TABLE = [
-      { provider: "Anthropic", name: "Claude 4 Sonnet", input: 3, cacheWrite: 3.75, cacheRead: 0.3, output: 15, isAuto: false, pool: "api" },
-      { provider: "Anthropic", name: "Claude 4 Sonnet 1M", input: 6, cacheWrite: 7.5, cacheRead: 0.6, output: 22.5, isAuto: false, pool: "api" },
-      { provider: "Anthropic", name: "Claude 4.5 Haiku", input: 1, cacheWrite: 1.25, cacheRead: 0.1, output: 5, isAuto: false, pool: "api" },
-      { provider: "Anthropic", name: "Claude 4.5 Opus", input: 5, cacheWrite: 6.25, cacheRead: 0.5, output: 25, isAuto: false, pool: "api" },
-      { provider: "Anthropic", name: "Claude 4.5 Sonnet", input: 3, cacheWrite: 3.75, cacheRead: 0.3, output: 15, isAuto: false, pool: "api" },
-      { provider: "Anthropic", name: "Claude 4.6 Opus", input: 5, cacheWrite: 6.25, cacheRead: 0.5, output: 25, isAuto: false, pool: "api" },
-      { provider: "Anthropic", name: "Claude 4.6 Sonnet", input: 3, cacheWrite: 3.75, cacheRead: 0.3, output: 15, isAuto: false, pool: "api" },
-      { provider: "Anthropic", name: "Claude 4.7 Opus", input: 5, cacheWrite: 6.25, cacheRead: 0.5, output: 25, isAuto: false, pool: "api" },
-      { provider: "Anthropic", name: "Claude Fable 5", input: 10, cacheWrite: 12.5, cacheRead: 1, output: 50, isAuto: false, pool: "api" },
-      { provider: "Anthropic", name: "Claude Opus 4.7 (fast mode)", input: 30, cacheWrite: 37.5, cacheRead: 3, output: 150, isAuto: false, pool: "api" },
-      { provider: "Anthropic", name: "Claude Opus 4.8", input: 5, cacheWrite: 6.25, cacheRead: 0.5, output: 25, isAuto: false, pool: "api" },
-      { provider: "Anthropic", name: "Claude Sonnet 5", input: 3, cacheWrite: 3.75, cacheRead: 0.3, output: 15, isAuto: false, pool: "api" },
-      { provider: "Cursor", name: "Composer 1", input: 1.25, cacheWrite: null, cacheRead: 0.125, output: 10, isAuto: false, pool: "firstParty" },
-      { provider: "Cursor", name: "Composer 2.5", input: 0.5, cacheWrite: null, cacheRead: 0.2, output: 2.5, isAuto: false, pool: "firstParty" },
-      { provider: "Cursor", name: "Composer 2.5 Fast", input: 3, cacheWrite: null, cacheRead: 0.5, output: 15, isAuto: false, pool: "firstParty", aliases: ["composer-2.5-fast", "Composer 2.5 (Fast)"] },
-      { provider: "Google", name: "Gemini 2.5 Flash", input: 0.3, cacheWrite: null, cacheRead: 0.03, output: 2.5, isAuto: false, pool: "api" },
-      { provider: "Google", name: "Gemini 3 Flash", input: 0.5, cacheWrite: null, cacheRead: 0.05, output: 3, isAuto: false, pool: "api" },
-      { provider: "Google", name: "Gemini 3 Pro", input: 2, cacheWrite: null, cacheRead: 0.2, output: 12, isAuto: false, pool: "api" },
-      { provider: "Google", name: "Gemini 3 Pro Image Preview", input: 2, cacheWrite: null, cacheRead: 0.2, output: 12, isAuto: false, pool: "api" },
-      { provider: "Google", name: "Gemini 3.1 Pro", input: 2, cacheWrite: null, cacheRead: 0.2, output: 12, isAuto: false, pool: "api" },
-      { provider: "Google", name: "Gemini 3.5 Flash", input: 1.5, cacheWrite: null, cacheRead: 0.15, output: 9, isAuto: false, pool: "api" },
-      { provider: "Z.ai", name: "GLM 5.2", input: 1.4, cacheWrite: null, cacheRead: 0.26, output: 4.4, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5", input: 1.25, cacheWrite: null, cacheRead: 0.125, output: 10, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5 Fast", input: 2.5, cacheWrite: null, cacheRead: 0.25, output: 20, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5 Mini", input: 0.25, cacheWrite: null, cacheRead: 0.025, output: 2, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5-Codex", input: 1.25, cacheWrite: null, cacheRead: 0.125, output: 10, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5.1 Codex", input: 1.25, cacheWrite: null, cacheRead: 0.125, output: 10, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5.1 Codex Max", input: 1.25, cacheWrite: null, cacheRead: 0.125, output: 10, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5.1 Codex Mini", input: 0.25, cacheWrite: null, cacheRead: 0.025, output: 2, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5.2", input: 1.75, cacheWrite: null, cacheRead: 0.175, output: 14, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5.2 Codex", input: 1.75, cacheWrite: null, cacheRead: 0.175, output: 14, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5.3 Codex", input: 1.75, cacheWrite: null, cacheRead: 0.175, output: 14, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5.4", input: 2.5, cacheWrite: null, cacheRead: 0.25, output: 15, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5.4 Mini", input: 0.75, cacheWrite: null, cacheRead: 0.075, output: 4.5, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5.4 Nano", input: 0.2, cacheWrite: null, cacheRead: 0.02, output: 1.25, isAuto: false, pool: "api" },
-      { provider: "OpenAI", name: "GPT-5.5", input: 5, cacheWrite: null, cacheRead: 0.5, output: 30, isAuto: false, pool: "api" },
-      { provider: "Cursor", name: "Grok 4.5", input: 2, cacheWrite: null, cacheRead: 0.5, output: 6, isAuto: false, pool: "firstParty" },
-      { provider: "Cursor", name: "Grok 4.5 Fast", input: 4, cacheWrite: null, cacheRead: 1, output: 18, isAuto: false, pool: "firstParty", aliases: ["grok-4.5-fast", "Grok 4.5 (Fast)"] },
-      { provider: "Moonshot", name: "Kimi K2.7 Code", input: 0.95, cacheWrite: null, cacheRead: 0.19, output: 4, isAuto: false, pool: "api" },
-      { provider: "Cursor", name: "Auto", input: 1.25, cacheWrite: null, cacheRead: 0.25, output: 6, isAuto: true, pool: "firstParty" }
-    ];
-
-    const EFFORT_SUFFIXES = ["xhigh", "high", "medium", "low", "max", "thinking"];
-    // fast 是价档（如 Composer/Grok Fast），不是思考档位；匹配时单独处理
-    const THINK_SUFFIXES = [...EFFORT_SUFFIXES, "fast"];
-
-    const REQUIRED_COLUMNS = [
-      "Model",
-      "Kind",
-      "Input (w/ Cache Write)",
-      "Input (w/o Cache Write)",
-      "Cache Read",
-      "Output Tokens"
-    ];
-
-    const COMPOSITION_META = [
-      { key: "input", label: "输入", tone: "" },
-      { key: "cacheWrite", label: "缓存写入", tone: "t2" },
-      { key: "cacheRead", label: "缓存读取", tone: "t3" },
-      { key: "output", label: "输出", tone: "t4" }
-    ];
-
-    let currentSummary = null;
-    let currentChartMetric = "cost";
-    let showTokenCols = false;
-
-    function isMaxMode(row) {
-      const v = String(row["Max Mode"] || "").trim().toLowerCase();
-      return v === "yes" || v === "true" || v === "1" || v === "y";
-    }
-
-    function normalizeKey(name) {
-      return String(name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    }
-
-    function buildPricingIndex(table) {
-      const index = Object.create(null);
-      function register(key, entry) {
-        if (!key) return;
-        if (index[key] === entry) return;
-        if (index[key]) {
-          console.warn("定价表归一化冲突，保留先写入项:", key, entry.name);
-          return;
-        }
-        index[key] = entry;
-      }
-      for (const entry of table) {
-        register(normalizeKey(entry.name), entry);
-        if (Array.isArray(entry.aliases)) {
-          for (const alias of entry.aliases) {
-            register(normalizeKey(alias), entry);
-          }
-        }
-      }
-      return index;
-    }
-
-    function matchModel(csvModel, index) {
-      const raw = String(csvModel || "").trim();
-      const key = normalizeKey(raw);
-
-      if (!key) {
-        return { entry: null, matchedKey: "", strength: "unmatched" };
-      }
-
-      if (key === "auto" && index.auto) {
-        return { entry: index.auto, matchedKey: "auto", strength: "exact" };
-      }
-
-      if (index[key]) {
-        return { entry: index[key], matchedKey: key, strength: "exact" };
-      }
-
-      const segments = raw.toLowerCase().split(/[-_./\s]+/).filter(Boolean);
-      const effortSet = new Set(EFFORT_SUFFIXES);
-
-      // 先去掉思考档位（保留 fast 价档），例如 gpt-5-high-fast → gpt-5-fast
-      const withoutEffort = segments.filter((s) => !effortSet.has(s));
-      if (withoutEffort.length !== segments.length) {
-        const candidate = normalizeKey(withoutEffort.join(""));
-        if (candidate && index[candidate]) {
-          return { entry: index[candidate], matchedKey: candidate, strength: "fuzzy" };
-        }
-      }
-
-      // 再逐步从末尾剥后缀（含 fast），每剥一层查一次
-      let current = key;
-      let peeling = true;
-      while (peeling) {
-        peeling = false;
-        for (const suffix of THINK_SUFFIXES) {
-          if (current.length > suffix.length && current.endsWith(suffix)) {
-            current = current.slice(0, -suffix.length);
-            if (index[current]) {
-              return { entry: index[current], matchedKey: current, strength: "fuzzy" };
-            }
-            peeling = true;
-            break;
-          }
-        }
-      }
-
-      for (let drop = 1; drop < segments.length; drop += 1) {
-        const candidate = normalizeKey(segments.slice(0, segments.length - drop).join(""));
-        if (candidate && index[candidate]) {
-          return { entry: index[candidate], matchedKey: candidate, strength: "fuzzy" };
-        }
-      }
-
-      return { entry: null, matchedKey: key, strength: "unmatched" };
-    }
-
-    function parseCsv(text) {
-      const rows = [];
-      let row = [];
-      let field = "";
-      let inQuotes = false;
-
-      for (let i = 0; i < text.length; i += 1) {
-        const ch = text[i];
-        const next = text[i + 1];
-
-        if (inQuotes) {
-          if (ch === '"' && next === '"') {
-            field += '"';
-            i += 1;
-          } else if (ch === '"') {
-            inQuotes = false;
-          } else {
-            field += ch;
-          }
-          continue;
-        }
-
-        if (ch === '"') {
-          inQuotes = true;
-        } else if (ch === ",") {
-          row.push(field);
-          field = "";
-        } else if (ch === "\n") {
-          row.push(field);
-          rows.push(row);
-          row = [];
-          field = "";
-        } else if (ch === "\r") {
-          // ignore
-        } else {
-          field += ch;
-        }
-      }
-
-      if (field.length > 0 || row.length > 0) {
-        row.push(field);
-        rows.push(row);
-      }
-
-      if (rows.length === 0) return { headers: [], records: [] };
-
-      const headers = rows[0].map((h) => h.trim());
-      const records = [];
-      for (let r = 1; r < rows.length; r += 1) {
-        const cells = rows[r];
-        if (cells.length === 1 && cells[0].trim() === "") continue;
-        const obj = {};
-        for (let c = 0; c < headers.length; c += 1) {
-          obj[headers[c]] = cells[c] != null ? String(cells[c]).trim() : "";
-        }
-        records.push(obj);
-      }
-      return { headers, records };
-    }
-
-    function toNumber(value) {
-      if (value == null) return 0;
-      const s = String(value).trim();
-      if (!s || s === "-" || s.toLowerCase() === "free") return 0;
-      const n = Number(s.replace(/,/g, ""));
-      return Number.isFinite(n) ? n : 0;
-    }
-
-    function isBillable(row) {
-      const kind = String(row.Kind || "");
-      if (/errored/i.test(kind)) return false;
-      if (/no\s*charge/i.test(kind)) return false;
-      return true;
-    }
-
-    function calcCostParts(tokens, price) {
-      const zero = { input: 0, cacheWrite: 0, cacheRead: 0, output: 0, total: 0 };
-      if (!price) return zero;
-      const { input, cacheWrite, cacheRead, output } = tokens;
-      let parts;
-      if (price.isAuto) {
-        // Auto：官方「Input + Cache Write」合并按 input 价
-        parts = {
-          input: ((cacheWrite + input) / 1e6) * price.input,
-          cacheWrite: 0,
-          cacheRead: (cacheRead / 1e6) * price.cacheRead,
-          output: (output / 1e6) * price.output
-        };
-      } else {
-        // 官方 Cache Write 为 "-" 时，按与 Input 同价计费
-        const cwPrice = price.cacheWrite == null ? price.input : price.cacheWrite;
-        parts = {
-          input: (input / 1e6) * price.input,
-          cacheWrite: (cacheWrite / 1e6) * cwPrice,
-          cacheRead: (cacheRead / 1e6) * price.cacheRead,
-          output: (output / 1e6) * price.output
-        };
-      }
-      parts.total = parts.input + parts.cacheWrite + parts.cacheRead + parts.output;
-      return parts;
-    }
-
-    function calcCost(tokens, price) {
-      return calcCostParts(tokens, price).total;
-    }
-
-    function emptyBucket(seed) {
-      return {
-        provider: seed.provider || "—",
-        name: seed.name,
-        sampleCsv: seed.sampleCsv || "",
-        strength: seed.strength || "unmatched",
-        pool: seed.pool || "unknown",
-        events: 0,
-        input: 0,
-        cacheWrite: 0,
-        cacheRead: 0,
-        output: 0,
-        cost: 0,
-        matched: Boolean(seed.matched)
-      };
-    }
-
-    function localDateKey(dateStr) {
-      const d = new Date(dateStr);
-      if (Number.isNaN(d.getTime())) return null;
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return y + "-" + m + "-" + day;
-    }
-
-    function eachDateInclusive(startKey, endKey) {
-      const out = [];
-      if (!startKey || !endKey) return out;
-      const cur = new Date(startKey + "T00:00:00");
-      const end = new Date(endKey + "T00:00:00");
-      while (cur <= end) {
-        const y = cur.getFullYear();
-        const m = String(cur.getMonth() + 1).padStart(2, "0");
-        const day = String(cur.getDate()).padStart(2, "0");
-        out.push(y + "-" + m + "-" + day);
-        cur.setDate(cur.getDate() + 1);
-      }
-      return out;
-    }
-
-    function formatShortDate(key) {
-      if (!key) return "—";
-      const parts = key.split("-");
-      return parts[1] + "-" + parts[2];
-    }
-
-    function aggregate(records, pricingIndex) {
-      const matchedMap = new Map();
-      const unmatchedMap = new Map();
-      const dailyMap = new Map();
-      const csvSamples = new Map();
-
-      let billableEvents = 0;
-      let excludedEvents = 0;
-      let unmatchedEvents = 0;
-      let exactEvents = 0;
-      let fuzzyEvents = 0;
-      let fuzzyCost = 0;
-      let totalCost = 0;
-      let firstPartyCost = 0;
-      let apiCost = 0;
-      let maxModeCost = 0;
-      let maxModeEvents = 0;
-      let totalInput = 0;
-      let totalCacheWrite = 0;
-      let totalCacheRead = 0;
-      let totalOutput = 0;
-      let composition = { input: 0, cacheWrite: 0, cacheRead: 0, output: 0 };
-
-      for (const row of records) {
-        if (!isBillable(row)) {
-          excludedEvents += 1;
-          continue;
-        }
-
-        billableEvents += 1;
-        const tokens = {
-          cacheWrite: toNumber(row["Input (w/ Cache Write)"]),
-          input: toNumber(row["Input (w/o Cache Write)"]),
-          cacheRead: toNumber(row["Cache Read"]),
-          output: toNumber(row["Output Tokens"])
-        };
-        const tokenSum = tokens.input + tokens.cacheWrite + tokens.cacheRead + tokens.output;
-        totalInput += tokens.input;
-        totalCacheWrite += tokens.cacheWrite;
-        totalCacheRead += tokens.cacheRead;
-        totalOutput += tokens.output;
-
-        const csvModel = row.Model || "(空模型)";
-        const match = matchModel(csvModel, pricingIndex);
-        const dayKey = localDateKey(row.Date);
-        const parts = match.entry ? calcCostParts(tokens, match.entry) : {
-          input: 0, cacheWrite: 0, cacheRead: 0, output: 0, total: 0
-        };
-        const cost = parts.total;
-        const pool = match.entry
-          ? (match.entry.pool === "firstParty" ? "firstParty" : "api")
-          : "unknown";
-        const maxMode = isMaxMode(row);
-
-        if (dayKey) {
-          if (!dailyMap.has(dayKey)) {
-            dailyMap.set(dayKey, {
-              date: dayKey,
-              cost: 0,
-              firstPartyCost: 0,
-              apiCost: 0,
-              events: 0,
-              tokens: 0
-            });
-          }
-          const day = dailyMap.get(dayKey);
-          day.events += 1;
-          day.tokens += tokenSum;
-          day.cost += cost;
-          if (pool === "firstParty") day.firstPartyCost += cost;
-          else if (pool === "api") day.apiCost += cost;
-        }
-
-        if (!match.entry) {
-          unmatchedEvents += 1;
-          if (!unmatchedMap.has(csvModel)) {
-            unmatchedMap.set(csvModel, emptyBucket({
-              name: csvModel,
-              sampleCsv: csvModel,
-              strength: "unmatched",
-              pool: "unknown",
-              matched: false
-            }));
-          }
-          const bucket = unmatchedMap.get(csvModel);
-          bucket.events += 1;
-          bucket.input += tokens.input;
-          bucket.cacheWrite += tokens.cacheWrite;
-          bucket.cacheRead += tokens.cacheRead;
-          bucket.output += tokens.output;
-          continue;
-        }
-
-        if (match.strength === "exact") exactEvents += 1;
-        else {
-          fuzzyEvents += 1;
-          fuzzyCost += cost;
-        }
-
-        if (maxMode) {
-          maxModeEvents += 1;
-          maxModeCost += cost;
-        }
-
-        composition.input += parts.input;
-        composition.cacheWrite += parts.cacheWrite;
-        composition.cacheRead += parts.cacheRead;
-        composition.output += parts.output;
-        totalCost += cost;
-
-        if (pool === "firstParty") firstPartyCost += cost;
-        else apiCost += cost;
-
-        const priceName = match.entry.name;
-        if (!matchedMap.has(priceName)) {
-          matchedMap.set(priceName, emptyBucket({
-            provider: match.entry.provider,
-            name: priceName,
-            sampleCsv: csvModel,
-            strength: match.strength,
-            pool: pool,
-            matched: true
-          }));
-        }
-        const bucket = matchedMap.get(priceName);
-        bucket.events += 1;
-        bucket.input += tokens.input;
-        bucket.cacheWrite += tokens.cacheWrite;
-        bucket.cacheRead += tokens.cacheRead;
-        bucket.output += tokens.output;
-        bucket.cost += cost;
-        if (match.strength === "exact") bucket.strength = "exact";
-
-        if (!csvSamples.has(priceName)) csvSamples.set(priceName, new Set());
-        csvSamples.get(priceName).add(csvModel);
-      }
-
-      for (const [name, bucket] of matchedMap) {
-        const set = csvSamples.get(name);
-        if (set) bucket.sampleCsv = Array.from(set).join(", ");
-        const tokenAll = bucket.input + bucket.cacheWrite + bucket.cacheRead + bucket.output;
-        bucket.costShare = totalCost > 0 ? bucket.cost / totalCost : 0;
-        bucket.avgCost = bucket.events > 0 ? bucket.cost / bucket.events : 0;
-        bucket.cacheRatio = tokenAll > 0 ? bucket.cacheRead / tokenAll : 0;
-        bucket.outputRatio = tokenAll > 0 ? bucket.output / tokenAll : 0;
-      }
-
-      const models = Array.from(matchedMap.values()).sort((a, b) => b.cost - a.cost);
-      const unmatched = Array.from(unmatchedMap.values()).sort((a, b) => b.events - a.events);
-
-      const dayKeys = Array.from(dailyMap.keys()).sort();
-      const start = dayKeys[0] || null;
-      const end = dayKeys[dayKeys.length - 1] || null;
-      const filledDays = eachDateInclusive(start, end).map((date) => {
-        return dailyMap.get(date) || {
-          date,
-          cost: 0,
-          firstPartyCost: 0,
-          apiCost: 0,
-          events: 0,
-          tokens: 0
-        };
-      });
-      const activeDayCount = filledDays.filter((d) => d.events > 0).length || 1;
-
-      let peakDay = { date: null, cost: 0 };
-      for (const d of filledDays) {
-        if (d.cost > peakDay.cost) peakDay = { date: d.date, cost: d.cost };
-      }
-
-      const topModel = models[0]
-        ? { name: models[0].name, share: models[0].costShare, pool: models[0].pool }
-        : { name: null, share: 0, pool: null };
-
-      const firstPartyShare = totalCost > 0 ? firstPartyCost / totalCost : 0;
-      const apiShare = totalCost > 0 ? apiCost / totalCost : 0;
-      const cacheReadCostShare = totalCost > 0 ? composition.cacheRead / totalCost : 0;
-      const maxModeCostShare = totalCost > 0 ? maxModeCost / totalCost : 0;
-      const matchedEvents = exactEvents + fuzzyEvents;
-      const exactMatchRate = matchedEvents > 0 ? exactEvents / matchedEvents : 0;
-      const avgDailyCost = totalCost / activeDayCount;
-      const avgCostPerEvent = billableEvents > 0 ? totalCost / billableEvents : 0;
-
-      const compositionRows = COMPOSITION_META.map((meta) => {
-        const cost = composition[meta.key];
-        return {
-          key: meta.key,
-          label: meta.label,
-          tone: meta.tone,
-          cost,
-          share: totalCost > 0 ? cost / totalCost : 0
-        };
-      });
-
-      const topComposition = compositionRows.slice().sort((a, b) => b.cost - a.cost)[0];
-
-      let insight = "暂无计费数据";
-      if (billableEvents > 0) {
-        const dominantPool = apiCost >= firstPartyCost
-          ? { label: "API 用量池", share: apiShare }
-          : { label: "第一方模型用量池", share: firstPartyShare };
-        const parts = [];
-        if (totalCost > 0 && dominantPool.share >= 0.5) {
-          parts.push(dominantPool.label + "占 " + formatPct(dominantPool.share));
-        }
-        if (topModel.name) {
-          parts.push("主因模型 " + topModel.name + " " + formatPct(topModel.share));
-        }
-        if (topComposition && topComposition.share >= 0.4) {
-          parts.push("花费主因 " + topComposition.label + " " + formatPct(topComposition.share));
-        }
-        if (peakDay.date) {
-          parts.push("峰值日 " + formatShortDate(peakDay.date) + " " + formatUsd(peakDay.cost));
-        }
-        insight = parts.length > 0 ? parts.join(" · ") : ("估算总花费 " + formatUsd(totalCost));
-      }
-
-      return {
-        totalCost,
-        firstPartyCost,
-        apiCost,
-        firstPartyShare,
-        apiShare,
-        billableEvents,
-        excludedEvents,
-        unmatchedEvents,
-        exactEvents,
-        fuzzyEvents,
-        fuzzyCost,
-        exactMatchRate,
-        maxModeEvents,
-        maxModeCost,
-        maxModeCostShare,
-        dateRange: { start, end },
-        avgDailyCost,
-        avgCostPerEvent,
-        cacheReadCostShare,
-        peakDay,
-        topModel,
-        insight,
-        daily: filledDays,
-        composition: compositionRows,
-        models,
-        unmatched
-      };
-    }
-
-    function formatUsd(n) {
-      if (!Number.isFinite(n)) return "$0.00";
-      const abs = Math.abs(n);
-      let digits = 2;
-      if (abs > 0 && abs < 0.01) digits = 4;
-      else if (abs < 1) digits = 3;
-      return "$" + n.toLocaleString("en-US", {
-        minimumFractionDigits: digits,
-        maximumFractionDigits: digits
-      });
-    }
-
-    function formatInt(n) {
-      return Math.round(n).toLocaleString("en-US");
-    }
-
-    function formatPct(n) {
-      if (!Number.isFinite(n)) return "0%";
-      const pct = n * 100;
-      const digits = pct > 0 && pct < 1 ? 2 : 1;
-      return pct.toFixed(digits) + "%";
-    }
-
-    function strengthBadge(strength) {
-      if (strength === "exact") return '<span class="badge exact">精确匹配</span>';
-      if (strength === "fuzzy") return '<span class="badge fuzzy">模糊匹配</span>';
-      return '<span class="badge miss">未匹配</span>';
-    }
-
-    function poolBadge(pool) {
-      if (pool === "firstParty") return '<span class="badge pool-fp">第一方模型</span>';
-      if (pool === "api") return '<span class="badge pool-api">API</span>';
-      return '<span class="badge pool-unknown">未知</span>';
-    }
-
-    function escapeHtml(s) {
-      return String(s)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-    }
-
-    function setUploadCompact(compact) {
-      const zone = document.getElementById("uploadZone");
-      const actions = document.getElementById("topbarActions");
-      if (compact) {
-        zone.classList.add("is-compact");
-        actions.classList.add("is-visible");
-      } else {
-        zone.classList.remove("is-compact");
-        actions.classList.remove("is-visible");
-      }
-    }
-
-    function renderInsight(summary) {
-      const el = document.getElementById("insight");
-      let html = escapeHtml(summary.insight || "");
-      const muted = [];
-      if (summary.billableEvents > 0 && summary.fuzzyEvents > 0) {
-        muted.push(
-          "模糊匹配 " + formatInt(summary.fuzzyEvents) + " 条 · 花费 "
-          + formatUsd(summary.fuzzyCost)
-        );
-      }
-      if (summary.billableEvents > 0 && summary.unmatchedEvents > 0) {
-        muted.push("未匹配 " + formatInt(summary.unmatchedEvents) + " 条");
-      }
-      if (muted.length > 0) {
-        html += '<span class="muted"> · ' + escapeHtml(muted.join(" · ")) + "</span>";
-      }
-      el.innerHTML = html;
-    }
-
-    function renderMetrics(summary) {
-      document.getElementById("metricTotal").textContent = formatUsd(summary.totalCost);
-      document.getElementById("metricPoolFp").textContent = formatUsd(summary.firstPartyCost);
-      document.getElementById("metricPoolFpShare").textContent = formatPct(summary.firstPartyShare);
-      document.getElementById("metricPoolApi").textContent = formatUsd(summary.apiCost);
-      document.getElementById("metricPoolApiShare").textContent = formatPct(summary.apiShare);
-      document.getElementById("metricDailyAvg").textContent = formatUsd(summary.avgDailyCost);
-      document.getElementById("metricEventAvg").textContent = formatUsd(summary.avgCostPerEvent);
-      document.getElementById("metricCacheShare").textContent = formatPct(summary.cacheReadCostShare);
-      document.getElementById("metricMaxShare").textContent = formatPct(summary.maxModeCostShare);
-
-      const range = summary.dateRange.start && summary.dateRange.end
-        ? (formatShortDate(summary.dateRange.start) + " 至 " + formatShortDate(summary.dateRange.end) + " · 本地时区")
-        : "无日期";
-      document.getElementById("metaRow").textContent = [
-        "计费事件 " + formatInt(summary.billableEvents),
-        "已排除 " + formatInt(summary.excludedEvents),
-        "精确匹配率 " + formatPct(summary.exactMatchRate),
-        "未匹配 " + formatInt(summary.unmatchedEvents),
-        range
-      ].join(" · ");
-    }
-
-    function renderDailyChart(summary, metric) {
-      const host = document.getElementById("chartHost");
-      const legend = document.getElementById("chartLegend");
-      const daily = summary.daily || [];
-      if (daily.length === 0) {
-        host.innerHTML = '<p class="chart-empty">无按日数据</p>';
-        legend.classList.add("is-hidden");
-        return;
-      }
-
-      const stacked = metric === "cost";
-      if (stacked) legend.classList.remove("is-hidden");
-      else legend.classList.add("is-hidden");
-
-      const values = daily.map((d) => {
-        if (metric === "events") return d.events;
-        if (metric === "tokens") return d.tokens;
-        return d.cost;
-      });
-      const maxVal = Math.max.apply(null, values.concat([0]));
-      const peakIdx = values.indexOf(maxVal);
-
-      const width = 1000;
-      const height = 180;
-      const padL = 48;
-      const padR = 12;
-      const padT = 20;
-      const padB = 36;
-      const plotW = width - padL - padR;
-      const plotH = height - padT - padB;
-      const n = daily.length;
-      const gap = n > 20 ? 2 : 4;
-      const barW = Math.max(4, (plotW - gap * (n - 1)) / n);
-
-      function yScale(v) {
-        if (maxVal <= 0) return padT + plotH;
-        return padT + plotH - (v / maxVal) * plotH;
-      }
-
-      function formatAxis(v) {
-        if (metric === "cost") return formatUsd(v);
-        if (metric === "tokens") {
-          if (v >= 1e6) return (v / 1e6).toFixed(1) + "M";
-          if (v >= 1e3) return (v / 1e3).toFixed(0) + "k";
-          return String(Math.round(v));
-        }
-        return formatInt(v);
-      }
-
-      const ticks = [0, 0.5, 1].map((t) => maxVal * t);
-      const grid = ticks.map((t) => {
-        const y = yScale(t);
-        return '<line x1="' + padL + '" y1="' + y + '" x2="' + (width - padR) + '" y2="' + y + '" stroke="#E4E7EC" stroke-width="1" />'
-          + '<text x="' + (padL - 8) + '" y="' + (y + 4) + '" text-anchor="end" fill="#8B95A5" font-size="11" font-variant-numeric="tabular-nums">'
-          + escapeHtml(formatAxis(t)) + "</text>";
-      }).join("");
-
-      const bars = daily.map((d, i) => {
-        const x = padL + i * (barW + gap);
-        const label = formatShortDate(d.date);
-        const showLabel = n <= 14 || i % Math.ceil(n / 10) === 0 || i === n - 1;
-        const labelText = showLabel
-          ? '<text x="' + (x + barW / 2) + '" y="' + (height - 12) + '" text-anchor="middle" fill="#8B95A5" font-size="11">'
-            + escapeHtml(label) + "</text>"
-          : "";
-
-        if (stacked) {
-          const fp = d.firstPartyCost || 0;
-          const api = d.apiCost || 0;
-          const total = fp + api;
-          const yBase = padT + plotH;
-          const tip = label + " · 合计 " + formatUsd(total)
-            + " · 第一方模型 " + formatUsd(fp)
-            + " · API " + formatUsd(api);
-
-          let rects = "";
-          if (api > 0 && maxVal > 0) {
-            const hApi = Math.max(2, (api / maxVal) * plotH);
-            const yApi = yBase - hApi;
-            rects += '<rect x="' + x + '" y="' + yApi + '" width="' + barW + '" height="' + hApi + '" fill="#64748B" rx="2">'
-              + "<title>" + escapeHtml(tip) + "</title></rect>";
-          }
-          if (fp > 0 && maxVal > 0) {
-            const hFp = Math.max(2, (fp / maxVal) * plotH);
-            const hApi = api > 0 ? Math.max(2, (api / maxVal) * plotH) : 0;
-            const yFp = yBase - hApi - hFp;
-            rects += '<rect x="' + x + '" y="' + yFp + '" width="' + barW + '" height="' + hFp + '" fill="#0F766E" rx="2">'
-              + "<title>" + escapeHtml(tip) + "</title></rect>";
-          }
-          if (total <= 0) {
-            rects = '<rect x="' + x + '" y="' + yBase + '" width="' + barW + '" height="0" fill="#0F766E">'
-              + "<title>" + escapeHtml(tip) + "</title></rect>";
-          }
-          return "<g>" + rects + labelText + "</g>";
-        }
-
-        const v = values[i];
-        const y = yScale(v);
-        const h = Math.max(v > 0 ? 2 : 0, padT + plotH - y);
-        const isPeak = i === peakIdx && maxVal > 0;
-        const fill = isPeak ? "#115E59" : "#0F766E";
-        const tip = label + " · "
-          + (metric === "events" ? (formatInt(d.events) + " 事件") : (formatInt(d.tokens) + " tokens"));
-        return "<g>"
-          + '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + h + '" fill="' + fill + '" rx="2">'
-          + "<title>" + escapeHtml(tip) + "</title></rect>"
-          + labelText
-          + "</g>";
-      }).join("");
-
-      host.innerHTML = '<svg class="chart-svg" viewBox="0 0 ' + width + " " + height + '" role="img" aria-label="按日趋势">'
-        + grid + bars + "</svg>";
-    }
-
-    function renderComposition(summary) {
-      const host = document.getElementById("compositionBars");
-      host.innerHTML = summary.composition.map((row) => {
-        const widthPct = Math.max(0, Math.min(100, row.share * 100));
-        return '<div class="bar-row">'
-          + '<div class="bar-label">' + escapeHtml(row.label) + "</div>"
-          + '<div class="bar-track"><div class="bar-fill ' + row.tone + '" style="width:' + widthPct + '%"></div></div>'
-          + '<div class="num">' + formatUsd(row.cost) + "</div>"
-          + '<div class="num share">' + formatPct(row.share) + "</div>"
-          + "</div>";
-      }).join("");
-    }
-
-    function syncTokenColsUi() {
-      const table = document.getElementById("modelTable");
-      const btn = document.getElementById("tokenColsBtn");
-      if (!table || !btn) return;
-      table.classList.toggle("show-tokens", showTokenCols);
-      btn.classList.toggle("is-active", showTokenCols);
-      btn.setAttribute("aria-pressed", showTokenCols ? "true" : "false");
-      btn.textContent = showTokenCols ? "隐藏 Token 明细" : "显示 Token 明细";
-    }
-
-    function renderModels(summary) {
-      const modelBody = document.getElementById("modelBody");
-      const unmatchedBlock = document.getElementById("unmatchedBlock");
-      const unmatchedBody = document.getElementById("unmatchedBody");
-      const colSpan = showTokenCols ? 12 : 8;
-
-      if (summary.models.length === 0 && summary.unmatched.length === 0) {
-        modelBody.innerHTML = '<tr><td colspan="' + colSpan + '"><p class="empty-note">没有可汇总的计费事件</p></td></tr>';
-      } else {
-        modelBody.innerHTML = summary.models.map((m) => `
-          <tr>
-            <td>${escapeHtml(m.provider)}</td>
-            <td class="model-name" title="${escapeHtml(m.sampleCsv || m.name)}">${escapeHtml(m.name)}</td>
-            <td>${strengthBadge(m.strength)}</td>
-            <td>${poolBadge(m.pool)}</td>
-            <td class="num">${formatInt(m.events)}</td>
-            <td class="num token-col">${formatInt(m.input)}</td>
-            <td class="num token-col">${formatInt(m.cacheWrite)}</td>
-            <td class="num token-col">${formatInt(m.cacheRead)}</td>
-            <td class="num token-col">${formatInt(m.output)}</td>
-            <td class="num cost">${formatUsd(m.cost)}</td>
-            <td class="num">${formatPct(m.costShare)}</td>
-            <td class="num">${formatUsd(m.avgCost)}</td>
-          </tr>
-        `).join("");
-      }
-
-      syncTokenColsUi();
-
-      if (summary.unmatched.length > 0) {
-        unmatchedBlock.classList.add("is-visible");
-        unmatchedBody.innerHTML = summary.unmatched.map((m) => `
-          <tr class="unmatched">
-            <td>${escapeHtml(m.name)}</td>
-            <td class="num">${formatInt(m.events)}</td>
-            <td class="num">${formatInt(m.input)}</td>
-            <td class="num">${formatInt(m.cacheWrite)}</td>
-            <td class="num">${formatInt(m.cacheRead)}</td>
-            <td class="num">${formatInt(m.output)}</td>
-          </tr>
-        `).join("");
-      } else {
-        unmatchedBlock.classList.remove("is-visible");
-        unmatchedBody.innerHTML = "";
-      }
-    }
-
-    function render(summary) {
-      currentSummary = summary;
-      renderInsight(summary);
-      renderMetrics(summary);
-      renderDailyChart(summary, currentChartMetric);
-      renderComposition(summary);
-      renderModels(summary);
-      document.getElementById("results").classList.add("is-visible");
-      setUploadCompact(true);
-    }
-
-    function showError(message) {
-      const bar = document.getElementById("errorBar");
-      bar.textContent = message;
-      bar.classList.add("is-visible");
-    }
-
-    function clearError() {
-      const bar = document.getElementById("errorBar");
-      bar.textContent = "";
-      bar.classList.remove("is-visible");
-    }
-
-    function validateHeaders(headers) {
-      return REQUIRED_COLUMNS.filter((col) => !headers.includes(col));
-    }
-
-    function processText(text) {
-      const parsed = parseCsv(text);
-      if (!parsed.records || parsed.records.length === 0) {
-        throw new Error("CSV 没有数据行。请确认是 Cursor usage-events 导出文件。");
-      }
-      const missing = validateHeaders(parsed.headers);
-      if (missing.length > 0) {
-        throw new Error("缺少必要列：" + missing.join(", "));
-      }
-      const pricingIndex = buildPricingIndex(PRICING_TABLE);
-      return aggregate(parsed.records, pricingIndex);
-    }
-
-    function setLoading(loading) {
-      const pickBtn = document.getElementById("pickBtn");
-      const replaceBtn = document.getElementById("replaceBtn");
-      const label = loading ? "解析中…" : "选择 CSV";
-      const replaceLabel = loading ? "解析中…" : "更换 CSV";
-      pickBtn.disabled = loading;
-      replaceBtn.disabled = loading;
-      pickBtn.textContent = label;
-      replaceBtn.textContent = replaceLabel;
-    }
-
-    function handleFile(file) {
-      if (!file) return;
-      clearError();
-      setLoading(true);
-
-      if (!file.size) {
-        setLoading(false);
-        showError("文件为空，请重新选择。");
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const text = String(reader.result || "");
-          if (!text.trim()) {
-            throw new Error("文件内容为空。");
-          }
-          const summary = processText(text);
-          render(summary);
-        } catch (err) {
-          document.getElementById("results").classList.remove("is-visible");
-          setUploadCompact(false);
-          currentSummary = null;
-          showError(err.message || "无法解析 CSV，请确认是 Cursor usage-events 导出文件。");
-        } finally {
-          setLoading(false);
-        }
-      };
-      reader.onerror = () => {
-        setLoading(false);
-        showError("读取文件失败，请重试。");
-      };
-      reader.readAsText(file, "UTF-8");
-    }
-
-    function bindUi() {
-      const zone = document.getElementById("uploadZone");
-      const input = document.getElementById("fileInput");
-      const pickBtn = document.getElementById("pickBtn");
-      const replaceBtn = document.getElementById("replaceBtn");
-      const chartMetric = document.getElementById("chartMetric");
-
-      function openPicker() { input.click(); }
-      pickBtn.addEventListener("click", openPicker);
-      replaceBtn.addEventListener("click", openPicker);
-
-      input.addEventListener("change", () => {
-        const file = input.files && input.files[0];
-        handleFile(file);
-        input.value = "";
-      });
-
-      ["dragenter", "dragover"].forEach((evt) => {
-        zone.addEventListener(evt, (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          zone.classList.add("is-dragover");
-        });
-      });
-
-      ["dragleave", "drop"].forEach((evt) => {
-        zone.addEventListener(evt, (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (evt === "dragleave") zone.classList.remove("is-dragover");
-        });
-      });
-
-      zone.addEventListener("drop", (e) => {
-        zone.classList.remove("is-dragover");
-        const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-        handleFile(file);
-      });
-
-      // 结果态也可拖到页面顶部更换
-      document.addEventListener("dragover", (e) => {
-        if (!currentSummary) return;
-        e.preventDefault();
-      });
-      document.addEventListener("drop", (e) => {
-        if (!currentSummary) return;
-        if (e.target && zone.contains(e.target)) return;
-        e.preventDefault();
-        const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-        if (file) handleFile(file);
-      });
-
-      chartMetric.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-metric]");
-        if (!btn || !currentSummary) return;
-        currentChartMetric = btn.getAttribute("data-metric");
-        chartMetric.querySelectorAll("button").forEach((b) => {
-          b.classList.toggle("is-active", b === btn);
-        });
-        renderDailyChart(currentSummary, currentChartMetric);
-      });
-
-      const policyToggle = document.getElementById("policyToggle");
-      const policyPanel = document.getElementById("policyPanel");
-      policyToggle.addEventListener("click", () => {
-        const open = policyToggle.getAttribute("aria-expanded") === "true";
-        const next = !open;
-        policyToggle.setAttribute("aria-expanded", next ? "true" : "false");
-        policyPanel.classList.toggle("is-open", next);
-        if (next) policyPanel.removeAttribute("hidden");
-        else policyPanel.setAttribute("hidden", "");
-      });
-
-      document.getElementById("tokenColsBtn").addEventListener("click", () => {
-        showTokenCols = !showTokenCols;
-        if (currentSummary) renderModels(currentSummary);
-        else syncTokenColsUi();
-      });
-    }
-
-    bindUi();
-  </script>
+  <script type="module" src="./js/main.js"></script>
 </body>
 </html>
