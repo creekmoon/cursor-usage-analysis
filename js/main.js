@@ -12,6 +12,7 @@ import {
   bindTrendChartEvents
 } from "./render.js";
 import { initI18n, setLocale, getLocale, t, onLocaleChange } from "./i18n.js";
+import { exportReportImage } from "./export-report.js";
 
 let currentSummary = null;
 let trendState = {
@@ -19,6 +20,7 @@ let trendState = {
   selectedDate: null
 };
 let isLoading = false;
+let isExporting = false;
 
 function showError(message) {
   const bar = document.getElementById("errorBar");
@@ -49,14 +51,42 @@ function processText(text) {
   return aggregate(parsed.records, pricingIndex);
 }
 
-function setLoading(loading) {
-  isLoading = loading;
+function syncActionButtons() {
   const pickBtn = document.getElementById("pickBtn");
   const replaceBtn = document.getElementById("replaceBtn");
-  pickBtn.disabled = loading;
-  replaceBtn.disabled = loading;
-  pickBtn.textContent = loading ? t("action.parsing") : t("action.pickCsv");
-  replaceBtn.textContent = loading ? t("action.parsing") : t("action.replaceCsv");
+  const exportBtn = document.getElementById("exportReportBtn");
+  const busy = isLoading || isExporting;
+
+  pickBtn.disabled = busy;
+  replaceBtn.disabled = busy;
+  pickBtn.textContent = isLoading ? t("action.parsing") : t("action.pickCsv");
+  replaceBtn.textContent = isLoading ? t("action.parsing") : t("action.replaceCsv");
+
+  if (exportBtn) {
+    exportBtn.disabled = busy || !currentSummary;
+    exportBtn.textContent = isExporting ? t("action.exporting") : t("action.exportReport");
+  }
+}
+
+function setLoading(loading) {
+  isLoading = loading;
+  syncActionButtons();
+}
+
+async function handleExportReport() {
+  if (!currentSummary || isExporting || isLoading) return;
+  clearError();
+  isExporting = true;
+  syncActionButtons();
+  try {
+    trendState.selectedDate = null;
+    await exportReportImage({ summary: currentSummary });
+  } catch (err) {
+    showError(err?.message || t("export.error.failed"));
+  } finally {
+    isExporting = false;
+    syncActionButtons();
+  }
 }
 
 function refreshTrendView() {
@@ -69,7 +99,7 @@ function refreshTrendView() {
 
 function refreshAfterLocaleChange() {
   clearError();
-  setLoading(isLoading);
+  syncActionButtons();
   if (currentSummary) {
     render(currentSummary, trendState.metric, trendState);
   } else {
@@ -120,12 +150,18 @@ function bindUi() {
   const input = document.getElementById("fileInput");
   const pickBtn = document.getElementById("pickBtn");
   const replaceBtn = document.getElementById("replaceBtn");
+  const exportBtn = document.getElementById("exportReportBtn");
   const chartMetric = document.getElementById("chartMetric");
   const langToggle = document.getElementById("langToggle");
 
   function openPicker() { input.click(); }
   pickBtn.addEventListener("click", openPicker);
   replaceBtn.addEventListener("click", openPicker);
+  if (exportBtn) {
+    exportBtn.addEventListener("click", () => {
+      handleExportReport();
+    });
+  }
 
   input.addEventListener("change", () => {
     const file = input.files && input.files[0];

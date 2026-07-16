@@ -798,3 +798,88 @@ tr.unmatched:hover td {
     transition: none;
   }
 }
+
+/* 导出图片报告：离屏捕获容器与页脚（仅出现在导出图中） */
+.export-capture-root {
+  /* 避免 left:-99999px 导致部分浏览器坐标溢出、左侧字形被裁 */
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 1180px;
+  transform: translate3d(-120vw, 0, 0);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.export-capture-panel {
+  width: 1180px;
+  box-sizing: border-box;
+  padding: 24px 32px 28px;
+  background: #F4F6F8;
+  color: #15202B;
+  font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  overflow: visible;
+}
+
+.export-capture-panel .results {
+  display: block;
+  margin-top: 0;
+  overflow: visible;
+}
+
+/* html2canvas 对 overflow:hidden 文本会裁掉首字母，导出时放开 */
+.export-capture-panel .usage-pref-name,
+.export-capture-panel .usage-hbar-label {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-word;
+  padding-left: 2px;
+}
+
+.export-capture-panel .usage-pref-row {
+  grid-template-columns: minmax(168px, 240px) 1fr;
+}
+
+.export-capture-panel .usage-hbar {
+  grid-template-columns: minmax(168px, 240px) 1fr 52px 64px;
+}
+
+.export-capture-panel .table-wrap,
+.export-capture-panel .usage-chart-host,
+.export-capture-panel .usage-panel {
+  overflow: visible;
+}
+
+.export-footer {
+  margin-top: 28px;
+  padding: 18px 20px;
+  background: #FFFFFF;
+  border: 1px solid #D8DEE6;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.export-footer-title {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #15202B;
+}
+
+.export-footer-meta {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: #8B95A5;
+  font-variant-numeric: tabular-nums;
+}
+
+.export-footer-link {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0F766E;
+  text-decoration: none;
+  word-break: break-all;
+}
