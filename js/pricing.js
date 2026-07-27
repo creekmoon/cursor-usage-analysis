@@ -8,7 +8,7 @@ export const PRICING_TABLE = [
   { provider: "Anthropic", name: "Claude 4.6 Sonnet", input: 3, cacheWrite: 3.75, cacheRead: 0.3, output: 15, isAuto: false, pool: "api" },
   { provider: "Anthropic", name: "Claude 4.7 Opus", input: 5, cacheWrite: 6.25, cacheRead: 0.5, output: 25, isAuto: false, pool: "api" },
   { provider: "Anthropic", name: "Claude Fable 5", input: 10, cacheWrite: 12.5, cacheRead: 1, output: 50, isAuto: false, pool: "api" },
-  { provider: "Anthropic", name: "Claude Opus 4.7 (fast mode)", input: 30, cacheWrite: 37.5, cacheRead: 3, output: 150, isAuto: false, pool: "api" },
+  { provider: "Anthropic", name: "Claude Opus 4.7 (fast mode)", input: 30, cacheWrite: 37.5, cacheRead: 3, output: 150, isAuto: false, pool: "api", aliases: ["claude-opus-4-7-fast", "claude-opus-4.7-fast"] },
   { provider: "Anthropic", name: "Claude Opus 4.8", input: 5, cacheWrite: 6.25, cacheRead: 0.5, output: 25, isAuto: false, pool: "api" },
   { provider: "Anthropic", name: "Claude Opus 4.8 Fast", input: 10, cacheWrite: 12.5, cacheRead: 1, output: 50, isAuto: false, pool: "api", aliases: ["claude-opus-4-8-fast", "claude-opus-4.8-fast"] },
   { provider: "Anthropic", name: "Claude Sonnet 5", input: 3, cacheWrite: 3.75, cacheRead: 0.3, output: 15, isAuto: false, pool: "api" },

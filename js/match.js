@@ -23,12 +23,21 @@ export function buildPricingIndex(table) {
     }
     index[key] = entry;
   }
+  // 价表「Claude 4.7 Opus」与 CSV「claude-opus-4-7」词序相反，建索引时补 Cursor slug key
+  const claudeVerRole = /^Claude ([\d.]+) (Opus|Sonnet|Haiku)$/i;
+
   for (const entry of table) {
     register(normalizeKey(entry.name), entry);
     if (Array.isArray(entry.aliases)) {
       for (const alias of entry.aliases) {
         register(normalizeKey(alias), entry);
       }
+    }
+    const m = String(entry.name || "").match(claudeVerRole);
+    if (m) {
+      const verDigits = m[1].replace(/\./g, "");
+      const role = m[2].toLowerCase();
+      register(`claude${role}${verDigits}`, entry);
     }
   }
   return index;
