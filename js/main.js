@@ -5,10 +5,7 @@ import { aggregate } from "./aggregate.js";
 import {
   render,
   renderTrendCharts,
-  syncModelViewUi,
   setUploadCompact,
-  getModelView,
-  setModelView,
   bindTrendChartEvents
 } from "./render.js";
 import { initI18n, setLocale, getLocale, t, onLocaleChange } from "./i18n.js";
@@ -102,8 +99,6 @@ function refreshAfterLocaleChange() {
   syncActionButtons();
   if (currentSummary) {
     render(currentSummary, trendState.metric, trendState);
-  } else {
-    syncModelViewUi(null);
   }
 }
 
@@ -226,23 +221,6 @@ function bindUi() {
     policyPanel.classList.toggle("is-open", next);
     if (next) policyPanel.removeAttribute("hidden");
     else policyPanel.setAttribute("hidden", "");
-  });
-
-  const modelViewEl = document.getElementById("modelView");
-  modelViewEl.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-model-view]");
-    if (!btn) return;
-    const next = btn.getAttribute("data-model-view");
-    if (next === getModelView()) return;
-    setModelView(next);
-    modelViewEl.querySelectorAll("button[data-model-view]").forEach((b) => {
-      b.classList.toggle("is-active", b === btn);
-    });
-    if (currentSummary) {
-      render(currentSummary, trendState.metric, trendState, { animateModels: true });
-    } else {
-      syncModelViewUi(null);
-    }
   });
 
   if (langToggle) {

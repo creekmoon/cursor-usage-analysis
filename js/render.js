@@ -6,7 +6,6 @@ import {
   formatShortDate,
   formatTokens,
   strengthBadge,
-  poolBadge,
   escapeHtml
 } from "./format.js";
 import { t, tokenLabel } from "./i18n.js";
@@ -25,7 +24,6 @@ const COLOR_FP = "#0F766E";
 const COLOR_API = "#64748B";
 const COLOR_PEAK = "#115E59";
 
-let modelView = "summary";
 let trendGeometry = null;
 let trendSummary = null;
 let trendOptions = {
@@ -35,40 +33,31 @@ let trendOptions = {
 };
 let trendEventsBound = false;
 
-export function getModelView() {
-  return modelView;
-}
-
-export function setModelView(value) {
-  modelView = value === "calc" ? "calc" : "summary";
-}
-
 const TH_BASE = "th-base";
 const TH_NUM = "num th-base";
 
-function renderModelThead(view) {
+function renderModelThead() {
   const thead = document.getElementById("modelThead");
   const table = document.getElementById("modelTable");
   if (!thead) return;
 
   let colgroup = table && table.querySelector("colgroup");
-  if (view === "calc") {
-    if (!colgroup && table) {
-      colgroup = document.createElement("colgroup");
-      table.insertBefore(colgroup, thead);
-    }
-    if (colgroup) {
-      colgroup.innerHTML = [
-        '<col class="col-provider" />',
-        '<col class="col-model" />',
-        '<col class="col-type" />',
-        '<col class="col-usage" />',
-        '<col class="col-price" />',
-        '<col class="col-part" />',
-        '<col class="col-total" />'
-      ].join("");
-    }
-    thead.innerHTML = `
+  if (!colgroup && table) {
+    colgroup = document.createElement("colgroup");
+    table.insertBefore(colgroup, thead);
+  }
+  if (colgroup) {
+    colgroup.innerHTML = [
+      '<col class="col-provider" />',
+      '<col class="col-model" />',
+      '<col class="col-type" />',
+      '<col class="col-usage" />',
+      '<col class="col-price" />',
+      '<col class="col-part" />',
+      '<col class="col-total" />'
+    ].join("");
+  }
+  thead.innerHTML = `
       <tr>
         <th class="${TH_BASE}">${t("models.th.provider")}</th>
         <th class="${TH_BASE}">${t("models.th.model")}</th>
@@ -78,20 +67,6 @@ function renderModelThead(view) {
         <th class="${TH_NUM}">${t("models.th.partCost")}</th>
         <th class="${TH_NUM}">${t("models.th.total")}</th>
       </tr>`;
-  } else {
-    if (colgroup) colgroup.remove();
-    thead.innerHTML = `
-      <tr>
-        <th class="${TH_BASE}">${t("models.th.provider")}</th>
-        <th class="${TH_BASE}">${t("models.th.model")}</th>
-        <th class="${TH_BASE}">${t("models.th.match")}</th>
-        <th class="${TH_BASE}">${t("models.th.pool")}</th>
-        <th class="${TH_NUM}">${t("models.th.events")}</th>
-        <th class="${TH_NUM}">${t("models.th.cost")}</th>
-        <th class="${TH_NUM}">${t("models.th.costShare")}</th>
-        <th class="${TH_NUM}">${t("models.th.avgCost")}</th>
-      </tr>`;
-  }
 }
 
 function priceCell(price, sameAsInput) {
@@ -114,6 +89,49 @@ function displayModelName(name) {
   if (!name) return t("token.emptyModel");
   if (name === "__other__") return t("token.other");
   return name;
+}
+
+function poolShortLabel(pool) {
+  if (pool === "firstParty") return t("usage.pool.fp");
+  if (pool === "api") return t("usage.pool.api");
+  return t("usage.pool.unknown");
+}
+
+function buildCalcMetaHtml(m, isUnmatched, alt) {
+  const displayName = displayModelName(m.name);
+  const tokenAll = (m.tokens != null)
+    ? m.tokens
+    : (m.input + m.cacheWrite + m.cacheRead + m.output);
+  const tokensPerEvent = m.events > 0 ? tokenAll / m.events : 0;
+  const parts = [
+    "<span>" + escapeHtml(t("models.meta.provider", {
+      provider: isUnmatched ? "—" : (m.provider || "—")
+    })) + "</span>",
+    "<span>" + escapeHtml(t("models.meta.matchPrefix")) + " "
+      + strengthBadge(m.strength, {
+        sampleCsv: m.sampleCsv,
+        priceName: displayName
+      })
+      + "</span>",
+    "<span>" + escapeHtml(t("models.meta.pool", {
+      pool: poolShortLabel(m.pool)
+    })) + "</span>",
+    "<span>" + escapeHtml(t("models.meta.events", {
+      n: formatInt(m.events)
+    })) + "</span>",
+    "<span>" + escapeHtml(t("models.meta.tokensPerEvent", {
+      tokens: formatTokens(tokensPerEvent)
+    })) + "</span>"
+  ];
+  const rowClass = [
+    "calc-meta",
+    "calc-group-start",
+    alt ? "calc-alt" : "",
+    isUnmatched ? "unmatched" : ""
+  ].filter(Boolean).join(" ");
+  return '<tr class="' + rowClass + '"><td colspan="7"><div class="calc-meta-inner">'
+    + parts.join("")
+    + "</div></td></tr>";
 }
 
 function buildCalcGroupHtml(m, isUnmatched, groupIndex) {
@@ -206,13 +224,13 @@ function buildCalcGroupHtml(m, isUnmatched, groupIndex) {
 
   const span = lineDefs.length;
   const rows = [];
+  rows.push(buildCalcMetaHtml(m, isUnmatched, alt));
 
   lineDefs.forEach((line, i) => {
     const isFirst = i === 0;
     const isLast = i === lineDefs.length - 1;
     const rowClass = [
       "calc-row",
-      isFirst ? "calc-group-start" : "",
       isLast && !footnote ? "calc-group-end" : "",
       alt ? "calc-alt" : "",
       isUnmatched ? "unmatched" : ""
@@ -266,27 +284,6 @@ function buildCalcGroupHtml(m, isUnmatched, groupIndex) {
   return rows.join("");
 }
 
-function renderSummaryBody(summary) {
-  if (summary.models.length === 0 && summary.unmatched.length === 0) {
-    return '<tr><td colspan="8"><p class="empty-note">' + t("models.empty") + "</p></td></tr>";
-  }
-  return summary.models.map((m) => `
-      <tr>
-        <td>${escapeHtml(m.provider)}</td>
-        <td class="model-name" title="${escapeHtml(m.sampleCsv || displayModelName(m.name))}">${escapeHtml(displayModelName(m.name))}</td>
-        <td>${strengthBadge(m.strength, {
-          sampleCsv: m.sampleCsv,
-          priceName: displayModelName(m.name)
-        })}</td>
-        <td>${poolBadge(m.pool)}</td>
-        <td class="num">${formatInt(m.events)}</td>
-        <td class="num cost">${formatUsd(m.cost)}</td>
-        <td class="num">${formatPct(m.costShare)}</td>
-        <td class="num">${formatUsd(m.avgCost)}</td>
-      </tr>
-    `).join("");
-}
-
 function renderCalcBody(summary) {
   const matched = summary.models.map((m, i) => buildCalcGroupHtml(m, false, i));
   const unmatched = summary.unmatched.map((m, i) =>
@@ -318,34 +315,11 @@ function withTableFade(updateFn) {
   });
 }
 
-export function syncModelViewUi(summary) {
-  const modelViewEl = document.getElementById("modelView");
-  const note = document.getElementById("modelViewNote");
+export function syncUnmatchedBlock(summary) {
   const unmatchedBlock = document.getElementById("unmatchedBlock");
-
-  if (modelViewEl) {
-    modelViewEl.querySelectorAll("button[data-model-view]").forEach((btn) => {
-      const active = btn.getAttribute("data-model-view") === modelView;
-      btn.classList.toggle("is-active", active);
-    });
-  }
-
-  if (note) {
-    note.textContent = modelView === "calc"
-      ? t("models.note.calc")
-      : t("models.note.summary");
-  }
-
-  if (unmatchedBlock) {
-    const hasUnmatched = summary && summary.unmatched.length > 0;
-    if (modelView === "calc") {
-      unmatchedBlock.classList.remove("is-visible");
-    } else if (hasUnmatched) {
-      unmatchedBlock.classList.add("is-visible");
-    } else {
-      unmatchedBlock.classList.remove("is-visible");
-    }
-  }
+  if (!unmatchedBlock) return;
+  // 未匹配已并入计算过程表；独立区块仅在需要时保留隐藏态
+  unmatchedBlock.classList.remove("is-visible");
 }
 
 export function setUploadCompact(compact) {
@@ -962,21 +936,16 @@ export function renderComposition(summary) {
 
 export function renderModels(summary, options = {}) {
   const modelBody = document.getElementById("modelBody");
-  const unmatchedBlock = document.getElementById("unmatchedBlock");
-  const unmatchedBody = document.getElementById("unmatchedBody");
   const emptyMessage = options.emptyMessage || null;
 
   const paint = () => {
     const table = document.getElementById("modelTable");
-    if (table) table.classList.toggle("view-calc", modelView === "calc");
-    renderModelThead(modelView);
+    if (table) table.classList.add("view-calc");
+    renderModelThead();
     if (emptyMessage) {
-      const cols = modelView === "calc" ? 7 : 8;
-      modelBody.innerHTML = '<tr><td colspan="' + cols + '"><p class="empty-note">' + escapeHtml(emptyMessage) + "</p></td></tr>";
-    } else if (modelView === "calc") {
-      modelBody.innerHTML = renderCalcBody(summary);
+      modelBody.innerHTML = '<tr><td colspan="7"><p class="empty-note">' + escapeHtml(emptyMessage) + "</p></td></tr>";
     } else {
-      modelBody.innerHTML = renderSummaryBody(summary);
+      modelBody.innerHTML = renderCalcBody(summary);
     }
   };
 
@@ -986,46 +955,16 @@ export function renderModels(summary, options = {}) {
     paint();
   }
 
-  syncModelViewUi(summary);
-
-  if (modelView !== "calc" && summary.unmatched.length > 0) {
-    unmatchedBlock.classList.add("is-visible");
-    unmatchedBody.innerHTML = summary.unmatched.map((m) => `
-      <tr class="unmatched">
-        <td>${escapeHtml(displayModelName(m.name))}</td>
-        <td class="num">${formatInt(m.events)}</td>
-        <td class="num">${formatInt(m.input)}</td>
-        <td class="num">${formatInt(m.cacheWrite)}</td>
-        <td class="num">${formatInt(m.cacheRead)}</td>
-        <td class="num">${formatInt(m.output)}</td>
-      </tr>
-    `).join("");
-  } else if (modelView !== "calc") {
-    unmatchedBlock.classList.remove("is-visible");
-    unmatchedBody.innerHTML = "";
-  }
+  syncUnmatchedBlock(summary);
 }
 
 function usageEmptyNote(message) {
   return '<p class="usage-empty">' + escapeHtml(message || t("usage.empty")) + "</p>";
 }
 
-function renderModelTokenChart(rows) {
-  if (!rows || rows.length === 0) return usageEmptyNote();
-  const maxShare = Math.max(...rows.map((r) => r.tokenShare), 0.001);
-  return rows.map((row) => {
-    const displayName = displayModelName(row.name);
-    const widthPct = Math.max(0, Math.min(100, (row.tokenShare / maxShare) * 100));
-    const title = displayName + " · " + formatTokens(row.tokens) + " tokens · " + formatPct(row.tokenShare);
-    return '<div class="usage-hbar" title="' + escapeHtml(title) + '">'
-      + '<span class="usage-hbar-label" title="' + escapeHtml(displayName) + '">' + escapeHtml(displayName) + "</span>"
-      + '<div class="usage-hbar-track" aria-hidden="true">'
-      + '<div class="usage-hbar-fill" style="width:' + widthPct.toFixed(2) + '%"></div>'
-      + "</div>"
-      + '<span class="usage-hbar-pct num">' + formatPct(row.tokenShare) + "</span>"
-      + '<span class="usage-hbar-val num">' + formatTokens(row.tokens) + "</span>"
-      + "</div>";
-  }).join("");
+function barWidthPct(share, maxShare) {
+  if (!(maxShare > 0)) return 0;
+  return Math.max(2, Math.min(100, (share / maxShare) * 100));
 }
 
 function renderTokenMixChart(rows) {
@@ -1056,39 +995,57 @@ function renderTokenMixChart(rows) {
     + '<div class="usage-stack-legend">' + legend + "</div>";
 }
 
-function renderPrefCompareChart(rows) {
-  if (!rows || rows.length === 0) return usageEmptyNote();
+function renderModelCompareList(models) {
+  if (!models || models.length === 0) return usageEmptyNote();
+
   const maxShare = Math.max(
-    ...rows.flatMap((r) => [r.eventShare, r.tokenShare]),
+    ...models.flatMap((m) => [m.costShare || 0, m.tokenShare || 0]),
     0.001
   );
 
-  return rows.map((row) => {
-    const displayName = displayModelName(row.name);
-    const eventW = Math.max(0, Math.min(100, (row.eventShare / maxShare) * 100));
-    const tokenW = Math.max(0, Math.min(100, (row.tokenShare / maxShare) * 100));
-    return '<div class="usage-pref-row">'
-      + '<span class="usage-pref-name" title="' + escapeHtml(displayName) + '">' + escapeHtml(displayName) + "</span>"
-      + '<div class="usage-pref-tracks">'
-      + '<div class="usage-pref-track" title="' + escapeHtml(t("usage.pref.eventsTitle", {
-        count: formatInt(row.events),
-        pct: formatPct(row.eventShare)
-      })) + '">'
-      + '<span class="usage-pref-track-label">' + t("usage.pref.events") + "</span>"
-      + '<div class="usage-pref-track-bar" aria-hidden="true">'
-      + '<div class="usage-pref-fill event" style="width:' + eventW.toFixed(2) + '%"></div>'
+  return models.map((m) => {
+    const displayName = displayModelName(m.name);
+    const costW = barWidthPct(m.costShare || 0, maxShare);
+    const tokenW = barWidthPct(m.tokenShare || 0, maxShare);
+    const costTitle = t("usage.compare.costTitle", {
+      cost: formatUsd(m.cost),
+      pct: formatPct(m.costShare)
+    });
+    const tokenTitle = t("usage.compare.tokenTitle", {
+      tokens: formatTokens(m.tokens),
+      pct: formatPct(m.tokenShare)
+    });
+
+    return '<div class="model-compare-row" role="listitem">'
+      + '<div class="model-compare-grid">'
+      + '<div class="model-compare-name" title="' + escapeHtml(m.sampleCsv || displayName) + '">'
+      + escapeHtml(displayName)
+      + '<div class="model-compare-name-sub num">'
+      + formatUsd(m.cost) + " · " + formatTokens(m.tokens)
       + "</div>"
-      + '<span class="usage-pref-pct num">' + formatPct(row.eventShare) + "</span>"
       + "</div>"
-      + '<div class="usage-pref-track" title="' + escapeHtml(t("usage.pref.tokenTitle", {
-        tokens: formatTokens(row.tokens),
-        pct: formatPct(row.tokenShare)
-      })) + '">'
-      + '<span class="usage-pref-track-label">Token</span>'
-      + '<div class="usage-pref-track-bar" aria-hidden="true">'
-      + '<div class="usage-pref-fill token" style="width:' + tokenW.toFixed(2) + '%"></div>'
+      + '<div class="model-compare-metric" title="' + escapeHtml(costTitle) + '">'
+      + '<div class="model-compare-track" aria-hidden="true">'
+      + '<div class="model-compare-fill cost" style="width:' + costW.toFixed(2) + '%"></div>'
       + "</div>"
-      + '<span class="usage-pref-pct num">' + formatPct(row.tokenShare) + "</span>"
+      + '<div class="model-compare-fig num">'
+      + "<b>" + formatUsd(m.cost) + "</b>"
+      + '<span class="model-compare-pct">' + formatPct(m.costShare) + "</span>"
+      + "</div>"
+      + "</div>"
+      + '<div class="model-compare-metric" title="' + escapeHtml(tokenTitle) + '">'
+      + '<div class="model-compare-track" aria-hidden="true">'
+      + '<div class="model-compare-fill token" style="width:' + tokenW.toFixed(2) + '%"></div>'
+      + "</div>"
+      + '<div class="model-compare-fig num">'
+      + "<b>" + formatTokens(m.tokens) + "</b>"
+      + '<span class="model-compare-pct">' + formatPct(m.tokenShare) + "</span>"
+      + "</div>"
+      + "</div>"
+      + '<div class="model-compare-side num">'
+      + '<b>' + formatInt(m.events) + "</b>"
+      + "<span> · " + formatUsd(m.avgCost) + " · </span>"
+      + '<span class="model-compare-pool">' + escapeHtml(poolShortLabel(m.pool)) + "</span>"
       + "</div>"
       + "</div>"
       + "</div>";
@@ -1096,23 +1053,46 @@ function renderPrefCompareChart(rows) {
 }
 
 function buildUsageInsight(summary) {
-  if (!(summary.billableEvents > 0 && summary.totalTokens > 0)) {
+  if (!(summary.billableEvents > 0 && (summary.totalTokens > 0 || summary.totalCost > 0))) {
     return t("usage.noData");
   }
   const favorites = summary.favorites || {};
-  if (favorites.mismatch) {
-    return t("usageInsight.mismatch", {
+  const parts = [];
+
+  if (favorites.costTokenMismatch && favorites.byCost?.name && favorites.byTokens?.name) {
+    parts.push(t("usageInsight.costTokenMismatch", {
+      costModel: favorites.byCost.name,
+      costPct: formatPct(favorites.byCost.share),
+      tokensModel: favorites.byTokens.name,
+      tokensPct: formatPct(favorites.byTokens.share)
+    }));
+  } else {
+    if (favorites.byCost?.name) {
+      parts.push(t("usageInsight.topCost", {
+        name: favorites.byCost.name,
+        pct: formatPct(favorites.byCost.share)
+      }));
+    }
+    if (favorites.byTokens?.name) {
+      parts.push(t("usageInsight.topTokens", {
+        name: favorites.byTokens.name,
+        pct: formatPct(favorites.byTokens.share)
+      }));
+    }
+  }
+
+  if (
+    favorites.mismatch
+    && favorites.byEvents?.name
+    && favorites.byTokens?.name
+    && !(favorites.costTokenMismatch && favorites.byEvents.name === favorites.byCost?.name)
+  ) {
+    parts.push(t("usageInsight.mismatch", {
       eventsModel: favorites.byEvents.name,
       tokensModel: favorites.byTokens.name
-    });
-  }
-  const parts = [];
-  if (favorites.byTokens && favorites.byTokens.name) {
-    parts.push(t("usageInsight.topTokens", {
-      name: favorites.byTokens.name,
-      pct: formatPct(favorites.byTokens.share)
     }));
   }
+
   if (summary.topTokenComposition && summary.topTokenComposition.share >= 0.35) {
     parts.push(t("usageInsight.topStructure", {
       label: tokenLabel(summary.topTokenComposition.key),
@@ -1133,31 +1113,34 @@ function buildUsageInsight(summary) {
 export function renderUsage(summary) {
   const insightEl = document.getElementById("usageInsight");
   const anchorsEl = document.getElementById("usageAnchors");
-  const modelHost = document.getElementById("modelTokenChartHost");
+  const compareHost = document.getElementById("modelCompareHost");
   const mixHost = document.getElementById("tokenMixChartHost");
-  const prefHost = document.getElementById("prefCompareChartHost");
-  if (!insightEl || !anchorsEl || !modelHost || !mixHost || !prefHost) return;
+  if (!insightEl || !anchorsEl || !compareHost || !mixHost) return;
 
-  const hasUsage = summary.billableEvents > 0 && summary.totalTokens > 0;
+  const hasUsage = summary.billableEvents > 0 && (summary.totalTokens > 0 || summary.models.length > 0);
   insightEl.textContent = buildUsageInsight(summary);
 
   if (!hasUsage) {
     anchorsEl.textContent = "";
-    modelHost.innerHTML = usageEmptyNote();
+    compareHost.innerHTML = usageEmptyNote();
     mixHost.innerHTML = usageEmptyNote();
-    prefHost.innerHTML = usageEmptyNote();
     return;
   }
 
-  anchorsEl.textContent = [
+  const anchors = [
     t("usage.anchor.total", { tokens: formatTokens(summary.totalTokens) }),
     t("usage.anchor.avg", { tokens: formatTokens(summary.avgTokensPerEvent) }),
     t("usage.anchor.cache", { pct: formatPct(summary.cacheHitRate) })
-  ].join(" · ");
+  ];
+  if (summary.totalTokens > 0) {
+    anchors.push(t("usage.anchor.unit", {
+      price: formatUsd(summary.avgCostPerMillionTokens || 0)
+    }));
+  }
+  anchorsEl.textContent = anchors.join(" · ");
 
-  modelHost.innerHTML = renderModelTokenChart(summary.modelsByTokens || []);
+  compareHost.innerHTML = renderModelCompareList(summary.models || []);
   mixHost.innerHTML = renderTokenMixChart(summary.tokenComposition || []);
-  prefHost.innerHTML = renderPrefCompareChart(summary.prefCompare || []);
 }
 
 export function render(summary, chartMetric, trendState = {}, renderOptions = {}) {

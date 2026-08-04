@@ -83,12 +83,12 @@ function prepareExportClone(root) {
 
   // html2canvas 对 overflow:hidden 的文本常会裁掉首尾字形
   root.querySelectorAll(
-    ".table-wrap, .usage-pref-name, .usage-hbar-label, .usage-chart-host, .usage-panel"
+    ".table-wrap, .model-compare-name, .usage-chart-host, .usage-panel"
   ).forEach((el) => {
     el.style.overflow = "visible";
   });
 
-  root.querySelectorAll(".usage-pref-name, .usage-hbar-label").forEach((el) => {
+  root.querySelectorAll(".model-compare-name").forEach((el) => {
     el.style.textOverflow = "clip";
     el.style.whiteSpace = "normal";
     el.style.wordBreak = "break-word";
@@ -96,12 +96,8 @@ function prepareExportClone(root) {
     el.style.paddingLeft = "2px";
   });
 
-  root.querySelectorAll(".usage-pref-row").forEach((el) => {
-    el.style.gridTemplateColumns = "minmax(168px, 240px) 1fr";
-  });
-
-  root.querySelectorAll(".usage-hbar").forEach((el) => {
-    el.style.gridTemplateColumns = "minmax(168px, 240px) 1fr 52px 64px";
+  root.querySelectorAll(".model-compare-grid").forEach((el) => {
+    el.style.gridTemplateColumns = "minmax(132px, 1.1fr) 1.6fr 1.6fr minmax(148px, auto)";
   });
 
   root.querySelectorAll("[id]").forEach((el) => {

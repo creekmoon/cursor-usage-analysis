@@ -169,60 +169,6 @@ function topByField(rows, field, total) {
   };
 }
 
-function buildModelsByTokens(allUsageRows, totalTokens, limit) {
-  const sorted = allUsageRows.slice().sort((a, b) => b.tokens - a.tokens);
-  const top = sorted.slice(0, limit);
-  const rest = sorted.slice(limit);
-  const rows = top.map((m) => ({
-    name: m.name,
-    tokens: m.tokens,
-    tokenShare: totalTokens > 0 ? m.tokens / totalTokens : 0,
-    events: m.events,
-    eventShare: 0,
-    pool: m.pool
-  }));
-  if (rest.length > 0) {
-    const otherTokens = rest.reduce((s, m) => s + m.tokens, 0);
-    const otherEvents = rest.reduce((s, m) => s + m.events, 0);
-    rows.push({
-      name: "__other__",
-      tokens: otherTokens,
-      tokenShare: totalTokens > 0 ? otherTokens / totalTokens : 0,
-      events: otherEvents,
-      eventShare: 0,
-      pool: "unknown",
-      isOther: true
-    });
-  }
-  const totalEvents = allUsageRows.reduce((s, m) => s + m.events, 0);
-  for (const row of rows) {
-    row.eventShare = totalEvents > 0 ? row.events / totalEvents : 0;
-  }
-  return rows;
-}
-
-function buildPrefCompareRows(allUsageRows, billableEvents, totalTokens, limit) {
-  const withShares = allUsageRows.map((m) => ({
-    name: m.name,
-    events: m.events,
-    tokens: m.tokens,
-    eventShare: billableEvents > 0 ? m.events / billableEvents : 0,
-    tokenShare: totalTokens > 0 ? m.tokens / totalTokens : 0,
-    pool: m.pool
-  }));
-  const byEvents = withShares.slice().sort((a, b) => b.events - a.events).slice(0, 5);
-  const byTokens = withShares.slice().sort((a, b) => b.tokens - a.tokens).slice(0, 5);
-  const nameSet = new Set();
-  const ordered = [];
-  for (const row of byEvents.concat(byTokens)) {
-    if (nameSet.has(row.name)) continue;
-    nameSet.add(row.name);
-    ordered.push(row);
-    if (ordered.length >= limit) break;
-  }
-  return ordered.sort((a, b) => b.tokenShare - a.tokenShare);
-}
-
 function buildTokenCompositionRows(totals, totalTokens) {
   const tokenMap = {
     input: totals.input,
@@ -403,6 +349,7 @@ export function aggregate(records, pricingIndex) {
     const set = csvSamples.get(name);
     if (set) bucket.sampleCsv = Array.from(set).join(", ");
     const tokenAll = bucket.input + bucket.cacheWrite + bucket.cacheRead + bucket.output;
+    bucket.tokens = tokenAll;
     bucket.costShare = totalCost > 0 ? bucket.cost / totalCost : 0;
     bucket.avgCost = bucket.events > 0 ? bucket.cost / bucket.events : 0;
     bucket.cacheRatio = tokenAll > 0 ? bucket.cacheRead / tokenAll : 0;
@@ -490,6 +437,11 @@ export function aggregate(records, pricingIndex) {
     ? totalCacheRead / (totalInput + totalCacheWrite + totalCacheRead)
     : 0;
   const avgTokensPerEvent = billableEvents > 0 ? totalTokens / billableEvents : 0;
+  const avgCostPerMillionTokens = totalTokens > 0 ? totalCost / (totalTokens / 1e6) : 0;
+
+  for (const m of models) {
+    m.tokenShare = totalTokens > 0 ? m.tokens / totalTokens : 0;
+  }
 
   let peakTokenDay = { date: null, tokens: 0 };
   for (const d of filledDays) {
@@ -503,6 +455,9 @@ export function aggregate(records, pricingIndex) {
     .map(toUsageModelRow);
 
   const favorites = {
+    byCost: topModel.name
+      ? { name: topModel.name, share: topModel.share, pool: topModel.pool }
+      : { name: null, share: 0, pool: null },
     byEvents: topByField(allUsageRows, "events", billableEvents),
     byTokens: topByField(allUsageRows, "tokens", totalTokens),
     mismatch: false
@@ -512,9 +467,12 @@ export function aggregate(records, pricingIndex) {
     && favorites.byTokens.name
     && favorites.byEvents.name !== favorites.byTokens.name
   );
+  favorites.costTokenMismatch = Boolean(
+    favorites.byCost.name
+    && favorites.byTokens.name
+    && favorites.byCost.name !== favorites.byTokens.name
+  );
 
-  const modelsByTokens = buildModelsByTokens(allUsageRows, totalTokens, 8);
-  const prefCompare = buildPrefCompareRows(allUsageRows, billableEvents, totalTokens, 6);
   const tokenComposition = buildTokenCompositionRows(tokenTotals, totalTokens);
   const topTokenComposition = tokenComposition.slice().sort((a, b) => b.tokens - a.tokens)[0];
 
@@ -537,6 +495,7 @@ export function aggregate(records, pricingIndex) {
     dateRange: { start, end },
     avgDailyCost,
     avgCostPerEvent,
+    avgCostPerMillionTokens,
     cacheReadCostShare,
     peakDay,
     topModel,
@@ -553,8 +512,6 @@ export function aggregate(records, pricingIndex) {
     cacheHitRate,
     peakTokenDay,
     favorites,
-    modelsByTokens,
-    prefCompare,
     tokenComposition
   };
 }

@@ -143,26 +143,30 @@
 
       <section class="section mb-7" id="usageSection" aria-labelledby="usageHeading">
         <div class="section-head flex items-center justify-between gap-3 mb-2.5 flex-wrap">
-          <h2 class="m-0 text-[15px] font-semibold" id="usageHeading" data-i18n="usage.heading">Token 用量</h2>
-          <span class="note text-subtle text-xs" data-i18n="usage.note">按 Token 数量统计，与上方花费无关</span>
+          <h2 class="m-0 text-[15px] font-semibold" id="usageHeading" data-i18n="usage.heading">模型用量与花费</h2>
+          <span class="note text-subtle text-xs" data-i18n="usage.note">同一批模型同时看花费与 Token</span>
         </div>
         <div class="usage-panel px-[18px] py-4 bg-surface border border-border rounded-lg">
-          <p class="usage-insight m-0 mb-3 text-sm font-medium leading-normal" id="usageInsight"></p>
-          <p class="usage-anchors m-0 mb-4 text-secondary text-[13px] tabular-nums" id="usageAnchors"></p>
+          <p class="usage-insight m-0" id="usageInsight"></p>
+          <p class="usage-anchors m-0 tabular-nums" id="usageAnchors"></p>
 
           <div class="usage-chart-block mb-5">
-            <p class="usage-chart-title m-0 mb-2.5 text-secondary text-xs font-medium" data-i18n="usage.chartModels">模型 Token 份额</p>
-            <div class="usage-chart-host" id="modelTokenChartHost" role="img" data-i18n-aria="usage.chartModels" aria-label="模型 Token 份额"></div>
-          </div>
-
-          <div class="usage-chart-block mb-5">
-            <p class="usage-chart-title m-0 mb-2.5 text-secondary text-xs font-medium" data-i18n="usage.chartMix">Token 类型构成</p>
-            <div class="usage-chart-host" id="tokenMixChartHost" role="img" data-i18n-aria="usage.chartMix" aria-label="Token 类型构成"></div>
+            <div class="flex items-baseline justify-between gap-2 mb-2.5 flex-wrap">
+              <p class="usage-chart-title m-0 text-secondary text-xs font-medium" data-i18n="usage.chartCompare">模型对照</p>
+              <p class="note m-0 text-subtle text-xs" data-i18n="usage.compare.note">按估算花费降序</p>
+            </div>
+            <div class="model-compare-legend" aria-hidden="true">
+              <span data-i18n="usage.compare.col.model">价表模型</span>
+              <span data-i18n="usage.compare.col.cost">花费份额</span>
+              <span data-i18n="usage.compare.col.token">Token 份额</span>
+              <span class="model-compare-legend-side" data-i18n="usage.compare.col.side">事件 · 均价 · 池</span>
+            </div>
+            <div class="usage-chart-host" id="modelCompareHost" role="list" data-i18n-aria="usage.chartCompare" aria-label="模型对照"></div>
           </div>
 
           <div class="usage-chart-block">
-            <p class="usage-chart-title m-0 mb-2.5 text-secondary text-xs font-medium" data-i18n="usage.chartPref">偏好对比（事件 vs Token）</p>
-            <div class="usage-chart-host" id="prefCompareChartHost" role="img" data-i18n-aria="usage.chartPref" aria-label="偏好对比（事件 vs Token）"></div>
+            <p class="usage-chart-title m-0 mb-2.5 text-secondary text-xs font-medium" data-i18n="usage.chartMix">Token 类型构成</p>
+            <div class="usage-chart-host" id="tokenMixChartHost" role="img" data-i18n-aria="usage.chartMix" aria-label="Token 类型构成"></div>
           </div>
         </div>
       </section>
@@ -210,30 +214,34 @@
 
       <div class="section mb-7">
         <div class="section-head flex items-center justify-between gap-3 mb-2.5 flex-wrap">
-          <h2 class="m-0 text-[15px] font-semibold" data-i18n="models.heading">按模型汇总</h2>
-          <div class="segmented inline-flex p-0.5 bg-muted rounded border border-border" id="modelView" role="group" data-i18n-aria="models.view.aria" aria-label="模型表视图">
-            <button type="button" data-model-view="summary" class="is-active h-7 px-3 border-0 rounded-sm bg-transparent text-secondary text-xs font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:shadow-focus" data-i18n="models.view.summary">汇总</button>
-            <button type="button" data-model-view="calc" class="h-7 px-3 border-0 rounded-sm bg-transparent text-secondary text-xs font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:shadow-focus" data-i18n="models.view.calc">计算过程</button>
-          </div>
+          <h2 class="m-0 text-[15px] font-semibold" data-i18n="models.heading">计算过程</h2>
+          <span class="note text-subtle text-xs" data-i18n="models.note.calc">单位 $/1M tokens · 分项之和等于该模型估算花费</span>
         </div>
         <div class="table-wrap overflow-x-auto bg-surface border border-border rounded-lg" id="modelTableWrap">
-          <table class="w-full border-collapse text-[13px]" id="modelTable">
+          <table class="w-full border-collapse text-[13px] view-calc" id="modelTable">
+            <colgroup>
+              <col class="col-provider" />
+              <col class="col-model" />
+              <col class="col-type" />
+              <col class="col-usage" />
+              <col class="col-price" />
+              <col class="col-part" />
+              <col class="col-total" />
+            </colgroup>
             <thead id="modelThead">
               <tr>
                 <th class="th-base" data-i18n="models.th.provider">提供商</th>
                 <th class="th-base" data-i18n="models.th.model">价表模型</th>
-                <th class="th-base" data-i18n="models.th.match">匹配方式</th>
-                <th class="th-base" data-i18n="models.th.pool">用量池</th>
-                <th class="num th-base" data-i18n="models.th.events">事件</th>
-                <th class="num th-base" data-i18n="models.th.cost">估算花费</th>
-                <th class="num th-base" data-i18n="models.th.costShare">花费占比</th>
-                <th class="num th-base" data-i18n="models.th.avgCost">单次均价</th>
+                <th class="th-base" data-i18n="models.th.type">类型</th>
+                <th class="num th-base" data-i18n="models.th.usage">用量</th>
+                <th class="num th-base" data-i18n="models.th.unitPrice">单价 $/1M</th>
+                <th class="num th-base" data-i18n="models.th.partCost">分项花费</th>
+                <th class="num th-base" data-i18n="models.th.total">合计</th>
               </tr>
             </thead>
             <tbody id="modelBody"></tbody>
           </table>
         </div>
-        <p class="note m-0 mt-1.5 text-subtle text-xs" id="modelViewNote" data-i18n="models.note.summary">按估算花费降序</p>
       </div>
 
       <div class="section unmatched-block mb-7" id="unmatchedBlock">
