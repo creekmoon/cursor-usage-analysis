@@ -72,11 +72,13 @@ function buildFooter(summary) {
 }
 
 function prepareExportClone(root) {
-  const calcToggle = root.querySelector("#calcToggle");
-  const calcBody = root.querySelector("#calcBody");
-  calcToggle.setAttribute("aria-expanded", "true");
-  calcBody.classList.add("is-open");
-  calcBody.removeAttribute("hidden");
+  root.querySelectorAll(".calc-toggle").forEach((el) => {
+    el.setAttribute("aria-expanded", "true");
+  });
+  root.querySelectorAll(".calc-body").forEach((el) => {
+    el.classList.add("is-open");
+    el.removeAttribute("hidden");
+  });
 
   root.querySelectorAll(".segmented").forEach((el) => {
     el.style.display = "none";

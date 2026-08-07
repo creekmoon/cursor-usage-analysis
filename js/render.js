@@ -485,10 +485,12 @@ function renderCumulativeSvg(daily, options, layout) {
   let series = "";
 
   if (maxVal > 0 && totalCum.length > 0) {
-    const areaPts = totalCum.map((v, i) => xCenter(i) + "," + yScale(v)).join(" L ");
+    const pts = totalCum.map((v, i) => xCenter(i) + "," + yScale(v));
+    const linePts = pts.join(" ");
+    const areaPts = pts.join(" L ");
     const area = "M" + xCenter(0) + "," + plotBottom + " L" + areaPts + " L" + xCenter(n - 1) + "," + plotBottom + " Z";
     series += '<path d="' + area + '" fill="rgba(15, 118, 110, 0.1)" />';
-    series += '<polyline fill="none" stroke="' + COLOR_FP + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="' + areaPts + '" />';
+    series += '<polyline fill="none" stroke="' + COLOR_FP + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="' + linePts + '" />';
   }
 
   const focusIdx = hoverIndex != null ? hoverIndex : (selectedDate ? daily.findIndex((d) => d.date === selectedDate) : -1);
