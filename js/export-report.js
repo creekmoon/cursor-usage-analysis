@@ -73,11 +73,8 @@ function buildFooter(summary) {
 
 function prepareExportClone(root) {
   root.querySelectorAll(".calc-toggle").forEach((el) => {
-    el.setAttribute("aria-expanded", "true");
-  });
-  root.querySelectorAll(".calc-body").forEach((el) => {
-    el.classList.add("is-open");
-    el.removeAttribute("hidden");
+    if (el.getAttribute("aria-expanded") === "true") return;
+    el.closest(".section")?.remove();
   });
 
   root.querySelectorAll(".segmented").forEach((el) => {
