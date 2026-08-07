@@ -72,6 +72,12 @@ function buildFooter(summary) {
 }
 
 function prepareExportClone(root) {
+  const calcToggle = root.querySelector("#calcToggle");
+  const calcBody = root.querySelector("#calcBody");
+  calcToggle.setAttribute("aria-expanded", "true");
+  calcBody.classList.add("is-open");
+  calcBody.removeAttribute("hidden");
+
   root.querySelectorAll(".segmented").forEach((el) => {
     el.style.display = "none";
   });

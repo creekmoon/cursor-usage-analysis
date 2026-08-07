@@ -84,6 +84,7 @@ const STRINGS = {
     "composition.noData": "暂无数据",
 
     "models.heading": "计算过程",
+    "models.collapsedHint": "{n} 个模型 · 审计明细",
     "models.note.calc": "单位 $/1M tokens · 分项之和等于该模型估算花费",
     "models.meta.provider": "提供商 {provider}",
     "models.meta.matchPrefix": "匹配",
@@ -263,6 +264,7 @@ const STRINGS = {
     "composition.noData": "No data",
 
     "models.heading": "Calculation",
+    "models.collapsedHint": "{n} models · audit breakdown",
     "models.note.calc": "Unit: $/1M tokens · line items sum to the model’s estimated cost",
     "models.meta.provider": "Provider {provider}",
     "models.meta.matchPrefix": "Match",

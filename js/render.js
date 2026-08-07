@@ -955,6 +955,10 @@ export function renderModels(summary, options = {}) {
     paint();
   }
 
+  const calcHint = document.getElementById("calcHint");
+  const modelCount = summary.models.length + summary.unmatched.length;
+  calcHint.textContent = t("models.collapsedHint", { n: formatInt(modelCount) });
+
   syncUnmatchedBlock(summary);
 }
 

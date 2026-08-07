@@ -223,6 +223,17 @@ function bindUi() {
     else policyPanel.setAttribute("hidden", "");
   });
 
+  const calcToggle = document.getElementById("calcToggle");
+  const calcBody = document.getElementById("calcBody");
+  calcToggle.addEventListener("click", () => {
+    const open = calcToggle.getAttribute("aria-expanded") === "true";
+    const next = !open;
+    calcToggle.setAttribute("aria-expanded", next ? "true" : "false");
+    calcBody.classList.toggle("is-open", next);
+    if (next) calcBody.removeAttribute("hidden");
+    else calcBody.setAttribute("hidden", "");
+  });
+
   if (langToggle) {
     langToggle.addEventListener("click", (e) => {
       const btn = e.target.closest("button[data-lang]");
