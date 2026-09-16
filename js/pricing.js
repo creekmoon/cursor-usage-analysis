@@ -8,13 +8,15 @@ export const PRICING_TABLE = [
   { provider: "Anthropic", name: "Claude 4.6 Sonnet", input: 3, cacheWrite: 3.75, cacheRead: 0.3, output: 15, isAuto: false, pool: "api" },
   { provider: "Anthropic", name: "Claude 4.7 Opus", input: 5, cacheWrite: 6.25, cacheRead: 0.5, output: 25, isAuto: false, pool: "api" },
   { provider: "Anthropic", name: "Claude Fable 5", input: 10, cacheWrite: 12.5, cacheRead: 1, output: 50, isAuto: false, pool: "api" },
+  // Notes: cache read is $0.25/M, 75% below Fable 5
+  { provider: "Anthropic", name: "Claude Fable 5.1", input: 10, cacheWrite: 12.5, cacheRead: 0.25, output: 50, isAuto: false, pool: "api", aliases: ["claude-fable-5.1", "claude-fable-5-1"] },
   { provider: "Anthropic", name: "Claude Opus 4.7 (fast mode)", input: 30, cacheWrite: 37.5, cacheRead: 3, output: 150, isAuto: false, pool: "api", aliases: ["claude-opus-4-7-fast", "claude-opus-4.7-fast"] },
   { provider: "Anthropic", name: "Claude Opus 4.8", input: 5, cacheWrite: 6.25, cacheRead: 0.5, output: 25, isAuto: false, pool: "api" },
   // Notes: Fast mode is 3x lower per-token than Opus 4.7 fast mode
   { provider: "Anthropic", name: "Claude Opus 4.8 Fast", input: 10, cacheWrite: 12.5, cacheRead: 1, output: 50, isAuto: false, pool: "api", aliases: ["claude-opus-4-8-fast", "claude-opus-4.8-fast"] },
   { provider: "Anthropic", name: "Claude Opus 5", input: 5, cacheWrite: 6.25, cacheRead: 0.5, output: 25, isAuto: false, pool: "api" },
   { provider: "Anthropic", name: "Claude Opus 5 Fast", input: 10, cacheWrite: 12.5, cacheRead: 1, output: 50, isAuto: false, pool: "api", aliases: ["claude-opus-5-fast"] },
-  { provider: "Anthropic", name: "Claude Sonnet 5", input: 3, cacheWrite: 3.75, cacheRead: 0.3, output: 15, isAuto: false, pool: "api" },
+  { provider: "Anthropic", name: "Claude Sonnet 5", input: 2, cacheWrite: 2.5, cacheRead: 0.2, output: 10, isAuto: false, pool: "api" },
   { provider: "Cursor", name: "Composer 1", input: 1.25, cacheWrite: null, cacheRead: 0.125, output: 10, isAuto: false, pool: "api" },
   { provider: "Cursor", name: "Composer 2.5", input: 0.5, cacheWrite: null, cacheRead: 0.2, output: 2.5, isAuto: false, pool: "firstParty" },
   { provider: "Cursor", name: "Composer 2.5 Fast", input: 3, cacheWrite: null, cacheRead: 0.5, output: 15, isAuto: false, pool: "firstParty", aliases: ["composer-2.5-fast", "Composer 2.5 (Fast)"] },
@@ -25,6 +27,8 @@ export const PRICING_TABLE = [
   { provider: "Google", name: "Gemini 3.1 Pro", input: 2, cacheWrite: null, cacheRead: 0.2, output: 12, isAuto: false, pool: "api" },
   { provider: "Google", name: "Gemini 3.5 Flash", input: 1.5, cacheWrite: null, cacheRead: 0.15, output: 9, isAuto: false, pool: "api" },
   { provider: "Google", name: "Gemini 3.6 Flash", input: 1.5, cacheWrite: null, cacheRead: 0.15, output: 7.5, isAuto: false, pool: "api" },
+  { provider: "Google", name: "Gemini 3.7 Flash", input: 0.75, cacheWrite: null, cacheRead: 0.075, output: 3.5, isAuto: false, pool: "api" },
+  { provider: "Google", name: "Gemini 3.8 Flash", input: 0.75, cacheWrite: null, cacheRead: 0.075, output: 3.5, isAuto: false, pool: "api" },
   { provider: "Z.ai", name: "GLM 5.2", input: 1.4, cacheWrite: null, cacheRead: 0.26, output: 4.4, isAuto: false, pool: "api" },
   { provider: "OpenAI", name: "GPT-5", input: 1.25, cacheWrite: null, cacheRead: 0.125, output: 10, isAuto: false, pool: "api" },
   { provider: "OpenAI", name: "GPT-5 Fast", input: 2.5, cacheWrite: null, cacheRead: 0.25, output: 20, isAuto: false, pool: "api" },
@@ -46,16 +50,18 @@ export const PRICING_TABLE = [
   { provider: "OpenAI", name: "GPT-5.6 Luna", input: 0.2, cacheWrite: 0.25, cacheRead: 0.02, output: 1.2, isAuto: false, pool: "api", aliases: ["gpt-5.6-luna", "gpt-5-6-luna"] },
   // Notes: Fast mode is 2x pricing
   { provider: "OpenAI", name: "GPT-5.6 Luna Fast", input: 0.4, cacheWrite: 0.5, cacheRead: 0.04, output: 2.4, isAuto: false, pool: "api", aliases: ["gpt-5.6-luna-fast", "gpt-5-6-luna-fast"] },
-  { provider: "OpenAI", name: "GPT-5.6 Sol", input: 5, cacheWrite: 6.25, cacheRead: 0.5, output: 30, isAuto: false, pool: "api", aliases: ["gpt-5.6-sol", "gpt-5-6-sol"] },
-  { provider: "OpenAI", name: "GPT-5.6 Sol Fast", input: 10, cacheWrite: 12.5, cacheRead: 1, output: 60, isAuto: false, pool: "api", aliases: ["gpt-5.6-sol-fast", "gpt-5-6-sol-fast"] },
+  // Notes: promotional pricing through November 21, 2026; Fast mode is 2x
+  { provider: "OpenAI", name: "GPT-5.6 Sol", input: 4, cacheWrite: 5, cacheRead: 0.4, output: 20, isAuto: false, pool: "api", aliases: ["gpt-5.6-sol", "gpt-5-6-sol"] },
+  { provider: "OpenAI", name: "GPT-5.6 Sol Fast", input: 8, cacheWrite: 10, cacheRead: 0.8, output: 40, isAuto: false, pool: "api", aliases: ["gpt-5.6-sol-fast", "gpt-5-6-sol-fast"] },
   { provider: "OpenAI", name: "GPT-5.6 Terra", input: 2, cacheWrite: 2.5, cacheRead: 0.2, output: 12, isAuto: false, pool: "api", aliases: ["gpt-5.6-terra", "gpt-5-6-terra"] },
   { provider: "OpenAI", name: "GPT-5.6 Terra Fast", input: 4, cacheWrite: 5, cacheRead: 0.4, output: 24, isAuto: false, pool: "api", aliases: ["gpt-5.6-terra-fast", "gpt-5-6-terra-fast"] },
   { provider: "Cursor", name: "Grok 4.6", input: 2, cacheWrite: null, cacheRead: 0.5, output: 6, isAuto: false, pool: "firstParty" },
   { provider: "Cursor", name: "Grok 4.6 Fast", input: 4, cacheWrite: null, cacheRead: 1, output: 12, isAuto: false, pool: "firstParty", aliases: ["grok-4.6-fast", "Grok 4.6 (Fast)"] },
   { provider: "Cursor", name: "Grok 4.5", input: 2, cacheWrite: null, cacheRead: 0.5, output: 6, isAuto: false, pool: "firstParty" },
-  { provider: "Cursor", name: "Grok 4.5 Fast", input: 4, cacheWrite: null, cacheRead: 1, output: 12, isAuto: false, pool: "firstParty", aliases: ["grok-4.5-fast", "Grok 4.5 (Fast)"] },
+  { provider: "Cursor", name: "Grok 4.5 Fast", input: 4, cacheWrite: null, cacheRead: 1, output: 18, isAuto: false, pool: "firstParty", aliases: ["grok-4.5-fast", "Grok 4.5 (Fast)"] },
   { provider: "Moonshot", name: "Kimi K2.7 Code", input: 0.95, cacheWrite: null, cacheRead: 0.19, output: 4, isAuto: false, pool: "api" },
   { provider: "Moonshot", name: "Kimi K3", input: 3, cacheWrite: null, cacheRead: 0.3, output: 15, isAuto: false, pool: "api" },
+  { provider: "Meta", name: "Muse Spark 1.3", input: 1.25, cacheWrite: null, cacheRead: 0.15, output: 4.25, isAuto: false, pool: "api", aliases: ["muse-spark-1.3", "muse-spark-1-3"] },
   { provider: "Cursor", name: "Auto", input: 1.25, cacheWrite: null, cacheRead: 0.25, output: 6, isAuto: true, pool: "firstParty" }
 ];
 
