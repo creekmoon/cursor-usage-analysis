@@ -72,10 +72,12 @@ function buildFooter(summary) {
 }
 
 function prepareExportClone(root) {
-  root.querySelectorAll(".calc-toggle").forEach((el) => {
-    if (el.getAttribute("aria-expanded") === "true") return;
-    el.closest(".section")?.remove();
-  });
+  // 导出图只保留顶部 KPI 与「模型用量与花费」；趋势 / 花费构成 / 计算过程 / 未匹配一律不进图
+  for (const key of ["trend.heading", "composition.heading", "models.heading", "unmatched.heading"]) {
+    root.querySelectorAll(`[data-i18n="${key}"]`).forEach((el) => {
+      el.closest(".section")?.remove();
+    });
+  }
 
   root.querySelectorAll(".segmented").forEach((el) => {
     el.style.display = "none";
