@@ -10,6 +10,7 @@ import {
 } from "./render.js";
 import { initI18n, setLocale, getLocale, t, onLocaleChange } from "./i18n.js";
 import { exportReportImage } from "./export-report.js";
+import { buildExportUsageEventsCsvUrl } from "./export-usage-events-csv.js";
 
 let currentSummary = null;
 let trendState = {
@@ -49,14 +50,11 @@ function processText(text) {
 }
 
 function syncActionButtons() {
-  const pickBtn = document.getElementById("pickBtn");
   const replaceBtn = document.getElementById("replaceBtn");
   const exportBtn = document.getElementById("exportReportBtn");
   const busy = isLoading || isExporting;
 
-  pickBtn.disabled = busy;
   replaceBtn.disabled = busy;
-  pickBtn.textContent = isLoading ? t("action.parsing") : t("action.pickCsv");
   replaceBtn.textContent = isLoading ? t("action.parsing") : t("action.replaceCsv");
 
   if (exportBtn) {
@@ -143,15 +141,41 @@ function handleFile(file) {
 function bindUi() {
   const zone = document.getElementById("uploadZone");
   const input = document.getElementById("fileInput");
-  const pickBtn = document.getElementById("pickBtn");
   const replaceBtn = document.getElementById("replaceBtn");
   const exportBtn = document.getElementById("exportReportBtn");
+  const downloadCsv = document.getElementById("downloadCsv");
+  const uploadGuideToggle = document.getElementById("uploadGuideToggle");
+  const uploadGuidePanel = document.getElementById("uploadGuidePanel");
   const chartMetric = document.getElementById("chartMetric");
   const langToggle = document.getElementById("langToggle");
 
   function openPicker() { input.click(); }
-  pickBtn.addEventListener("click", openPicker);
+  downloadCsv.href = buildExportUsageEventsCsvUrl(new Date());
+  downloadCsv.addEventListener("click", () => {
+    downloadCsv.href = buildExportUsageEventsCsvUrl(new Date());
+  });
+  uploadGuideToggle.addEventListener("click", () => {
+    const open = uploadGuideToggle.getAttribute("aria-expanded") === "true";
+    const next = !open;
+    uploadGuideToggle.setAttribute("aria-expanded", next ? "true" : "false");
+    uploadGuidePanel.classList.toggle("is-open", next);
+    if (next) uploadGuidePanel.removeAttribute("hidden");
+    else uploadGuidePanel.setAttribute("hidden", "");
+  });
   replaceBtn.addEventListener("click", openPicker);
+  zone.addEventListener("click", (e) => {
+    /* 下载、折叠、备用三步不是把文件放进框 */
+    if (isLoading || isExporting) return;
+    if (e.target.closest("a, button, input, #uploadGuidePanel")) return;
+    openPicker();
+  });
+  zone.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    if (e.target !== zone) return;
+    if (isLoading || isExporting) return;
+    e.preventDefault();
+    openPicker();
+  });
   if (exportBtn) {
     exportBtn.addEventListener("click", () => {
       handleExportReport();
