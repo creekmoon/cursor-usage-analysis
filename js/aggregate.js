@@ -1,4 +1,4 @@
-import { COMPOSITION_META } from "./pricing.js";
+import { COMPOSITION_META, applyLongContext } from "./pricing.js";
 import { matchModel } from "./match.js";
 
 export function isMaxMode(row) {
@@ -231,13 +231,22 @@ export function aggregate(records, pricingIndex) {
 
     const csvModel = row.Model || "";
     const match = matchModel(csvModel, pricingIndex);
+    let entry = match.entry;
+    let strength = match.strength;
+    if (entry) {
+      const billed = applyLongContext(entry, tokens);
+      if (billed !== entry) {
+        entry = billed;
+        strength = "fuzzy";
+      }
+    }
     const dayKey = localDateKey(row.Date);
-    const parts = match.entry ? calcCostParts(tokens, match.entry) : {
+    const parts = entry ? calcCostParts(tokens, entry) : {
       input: 0, cacheWrite: 0, cacheRead: 0, output: 0, total: 0
     };
     const cost = parts.total;
-    const pool = match.entry
-      ? (match.entry.pool === "firstParty" ? "firstParty" : "api")
+    const pool = entry
+      ? (entry.pool === "firstParty" ? "firstParty" : "api")
       : "unknown";
     const maxMode = isMaxMode(row);
 
@@ -251,21 +260,21 @@ export function aggregate(records, pricingIndex) {
       day.cost += cost;
       if (pool === "firstParty") day.firstPartyCost += cost;
       else if (pool === "api") day.apiCost += cost;
-      if (match.entry) {
+      if (entry) {
         day.composition.input += parts.input;
         day.composition.cacheWrite += parts.cacheWrite;
         day.composition.cacheRead += parts.cacheRead;
         day.composition.output += parts.output;
 
-        const priceName = match.entry.name;
+        const priceName = entry.name;
         if (!day.modelsMap.has(priceName)) {
           day.modelsMap.set(priceName, emptyBucket({
-            provider: match.entry.provider,
+            provider: entry.provider,
             name: priceName,
             sampleCsv: csvModel,
-            strength: match.strength,
+            strength: strength,
             pool: pool,
-            price: priceSnapshot(match.entry),
+            price: priceSnapshot(entry),
             matched: true
           }));
         }
@@ -276,11 +285,11 @@ export function aggregate(records, pricingIndex) {
         dayBucket.cacheRead += tokens.cacheRead;
         dayBucket.output += tokens.output;
         dayBucket.cost += cost;
-        if (match.strength === "exact") dayBucket.strength = "exact";
+        if (strength === "exact") dayBucket.strength = "exact";
       }
     }
 
-    if (!match.entry) {
+    if (!entry) {
       unmatchedEvents += 1;
       if (!unmatchedMap.has(csvModel)) {
         unmatchedMap.set(csvModel, emptyBucket({
@@ -300,7 +309,7 @@ export function aggregate(records, pricingIndex) {
       continue;
     }
 
-    if (match.strength === "exact") exactEvents += 1;
+    if (strength === "exact") exactEvents += 1;
     else {
       fuzzyEvents += 1;
       fuzzyCost += cost;
@@ -320,15 +329,15 @@ export function aggregate(records, pricingIndex) {
     if (pool === "firstParty") firstPartyCost += cost;
     else apiCost += cost;
 
-    const priceName = match.entry.name;
+    const priceName = entry.name;
     if (!matchedMap.has(priceName)) {
       matchedMap.set(priceName, emptyBucket({
-        provider: match.entry.provider,
+        provider: entry.provider,
         name: priceName,
         sampleCsv: csvModel,
-        strength: match.strength,
+        strength: strength,
         pool: pool,
-        price: priceSnapshot(match.entry),
+        price: priceSnapshot(entry),
         matched: true
       }));
     }
@@ -339,7 +348,7 @@ export function aggregate(records, pricingIndex) {
     bucket.cacheRead += tokens.cacheRead;
     bucket.output += tokens.output;
     bucket.cost += cost;
-    if (match.strength === "exact") bucket.strength = "exact";
+    if (strength === "exact") bucket.strength = "exact";
 
     if (!csvSamples.has(priceName)) csvSamples.set(priceName, new Set());
     csvSamples.get(priceName).add(csvModel);
