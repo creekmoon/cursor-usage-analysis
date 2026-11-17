@@ -10,7 +10,9 @@ export const PRICING_TABLE = [
   { provider: "Anthropic", name: "Claude Fable 5", input: 10, cacheWrite: 12.5, cacheRead: 1, output: 50, isAuto: false, pool: "api" },
   // Notes: cache read is $0.25/M, 75% below Fable 5
   { provider: "Anthropic", name: "Claude Fable 5.1", input: 10, cacheWrite: 12.5, cacheRead: 0.25, output: 50, isAuto: false, pool: "api", aliases: ["claude-fable-5.1", "claude-fable-5-1"] },
-  // Notes: prompt above 100k tokens bills at 5x. Prompt = uncached input + cache write + cache read.
+  // Notes: input/output 20% below Fable 5.1; cache write $10/M, cache read $0.20/M
+  { provider: "Anthropic", name: "Claude Fable 5.2", input: 8, cacheWrite: 10, cacheRead: 0.2, output: 40, isAuto: false, pool: "api", aliases: ["claude-fable-5.2", "claude-fable-5-2"] },
+  // Notes: input length above 100k bills at 5x. Input length = uncached input + cache write + cache read.
   { provider: "Anthropic", name: "Claude Haiku 5.5", input: 0.1, cacheWrite: 0.125, cacheRead: 0.01, output: 0.5, isAuto: false, pool: "api", aliases: ["claude-haiku-5.5", "claude-haiku-5-5"], longContext: { above: 100000, to: "Claude Haiku 5.5 (>100k)" } },
   { provider: "Anthropic", name: "Claude Haiku 5.5 (>100k)", input: 0.5, cacheWrite: 0.625, cacheRead: 0.05, output: 2.5, isAuto: false, pool: "api" },
   { provider: "Anthropic", name: "Claude Opus 4.7 (fast mode)", input: 30, cacheWrite: 37.5, cacheRead: 3, output: 150, isAuto: false, pool: "api", aliases: ["claude-opus-4-7-fast", "claude-opus-4.7-fast"] },
@@ -40,6 +42,9 @@ export const PRICING_TABLE = [
   { provider: "Google", name: "Gemini 3.7 Flash", input: 0.75, cacheWrite: null, cacheRead: 0.075, output: 3.75, isAuto: false, pool: "api" },
   { provider: "Google", name: "Gemini 3.8 Flash", input: 0.75, cacheWrite: null, cacheRead: 0.075, output: 3.75, isAuto: false, pool: "api" },
   { provider: "Google", name: "Gemini 4 Argon", input: 2, cacheWrite: null, cacheRead: 0.1, output: 10, isAuto: false, pool: "api", aliases: ["gemini-4-argon"] },
+  // Notes: introductory rates through 2026-11-30. From 2026-12-01: input $4, cache read $0.20, output $20
+  { provider: "Google", name: "Gemini 4 Carbon", input: 2, cacheWrite: null, cacheRead: 0.1, output: 10, isAuto: false, pool: "api", aliases: ["gemini-4-carbon"] },
+  { provider: "Google", name: "Gemini 4 Hydrogen", input: 1.5, cacheWrite: null, cacheRead: 0.075, output: 7.5, isAuto: false, pool: "api", aliases: ["gemini-4-hydrogen"] },
   { provider: "Z.ai", name: "GLM 5.2", input: 1.4, cacheWrite: null, cacheRead: 0.26, output: 4.4, isAuto: false, pool: "api" },
   { provider: "Z.ai", name: "GLM 5.3", input: 1.4, cacheWrite: null, cacheRead: 0.26, output: 4.4, isAuto: false, pool: "api", aliases: ["glm-5.3", "glm-5p3", "glm-5-3"] },
   { provider: "Z.ai", name: "GLM 5.3 Flash", input: 0.15, cacheWrite: null, cacheRead: 0.029, output: 0.5, isAuto: false, pool: "api", aliases: ["glm-5.3-flash", "glm-5p3-flash", "glm-5-3-flash"] },
@@ -53,22 +58,34 @@ export const PRICING_TABLE = [
   { provider: "OpenAI", name: "GPT-5.2", input: 1.75, cacheWrite: null, cacheRead: 0.175, output: 14, isAuto: false, pool: "api" },
   { provider: "OpenAI", name: "GPT-5.2 Codex", input: 1.75, cacheWrite: null, cacheRead: 0.175, output: 14, isAuto: false, pool: "api" },
   { provider: "OpenAI", name: "GPT-5.3 Codex", input: 1.75, cacheWrite: null, cacheRead: 0.175, output: 14, isAuto: false, pool: "api" },
-  { provider: "OpenAI", name: "GPT-5.4", input: 2.5, cacheWrite: null, cacheRead: 0.25, output: 15, isAuto: false, pool: "api" },
+  // Notes: input above 272k doubles input-side rates and sets output to 1.5x. Fast stays 2x; no Fast + long-context row is published.
+  { provider: "OpenAI", name: "GPT-5.4", input: 2.5, cacheWrite: null, cacheRead: 0.25, output: 15, isAuto: false, pool: "api", longContext: { above: 272000, to: "GPT-5.4 (>272k)" } },
+  { provider: "OpenAI", name: "GPT-5.4 (>272k)", input: 5, cacheWrite: null, cacheRead: 0.5, output: 22.5, isAuto: false, pool: "api" },
   // Notes: Fast mode is 2x pricing
   { provider: "OpenAI", name: "GPT-5.4 Fast", input: 5, cacheWrite: null, cacheRead: 0.5, output: 30, isAuto: false, pool: "api", aliases: ["gpt-5.4-fast", "gpt-5-4-fast"] },
   { provider: "OpenAI", name: "GPT-5.4 Mini", input: 0.75, cacheWrite: null, cacheRead: 0.075, output: 4.5, isAuto: false, pool: "api" },
   { provider: "OpenAI", name: "GPT-5.4 Nano", input: 0.2, cacheWrite: null, cacheRead: 0.02, output: 1.25, isAuto: false, pool: "api" },
-  { provider: "OpenAI", name: "GPT-5.5", input: 5, cacheWrite: null, cacheRead: 0.5, output: 30, isAuto: false, pool: "api" },
-  { provider: "OpenAI", name: "GPT-5.5 Fast", input: 10, cacheWrite: null, cacheRead: 1, output: 60, isAuto: false, pool: "api", aliases: ["gpt-5.5-fast", "gpt-5-5-fast"] },
-  { provider: "OpenAI", name: "GPT-5.6 Luna", input: 0.2, cacheWrite: 0.25, cacheRead: 0.02, output: 1.2, isAuto: false, pool: "api", aliases: ["gpt-5.6-luna", "gpt-5-6-luna"] },
+  // Notes: input above 272k doubles input-side rates and sets output to 1.5x. No Fast + long-context row is published.
+  { provider: "OpenAI", name: "GPT-5.5", input: 5, cacheWrite: null, cacheRead: 0.5, output: 30, isAuto: false, pool: "api", longContext: { above: 272000, to: "GPT-5.5 (>272k)" } },
+  { provider: "OpenAI", name: "GPT-5.5 (>272k)", input: 10, cacheWrite: null, cacheRead: 1, output: 45, isAuto: false, pool: "api" },
+  // Notes: Fast mode is 2.5x standard ($12.5/M input, $1.25/M cache read, $75/M output)
+  { provider: "OpenAI", name: "GPT-5.5 Fast", input: 12.5, cacheWrite: null, cacheRead: 1.25, output: 75, isAuto: false, pool: "api", aliases: ["gpt-5.5-fast", "gpt-5-5-fast"] },
+  // Notes: input above 272k doubles input, cache write, and cache read, and sets output to 1.5x. Fast long context applies those multipliers to the Fast rates.
+  { provider: "OpenAI", name: "GPT-5.6 Luna", input: 0.2, cacheWrite: 0.25, cacheRead: 0.02, output: 1.2, isAuto: false, pool: "api", aliases: ["gpt-5.6-luna", "gpt-5-6-luna"], longContext: { above: 272000, to: "GPT-5.6 Luna (>272k)" } },
+  { provider: "OpenAI", name: "GPT-5.6 Luna (>272k)", input: 0.4, cacheWrite: 0.5, cacheRead: 0.04, output: 1.8, isAuto: false, pool: "api" },
   // Notes: Fast mode is 2x pricing
-  { provider: "OpenAI", name: "GPT-5.6 Luna Fast", input: 0.4, cacheWrite: 0.5, cacheRead: 0.04, output: 2.4, isAuto: false, pool: "api", aliases: ["gpt-5.6-luna-fast", "gpt-5-6-luna-fast"] },
-  // Notes: promotional pricing through November 21, 2026; Fast mode is 2x
-  { provider: "OpenAI", name: "GPT-5.6 Sol", input: 4, cacheWrite: 5, cacheRead: 0.4, output: 20, isAuto: false, pool: "api", aliases: ["gpt-5.6-sol", "gpt-5-6-sol"] },
-  { provider: "OpenAI", name: "GPT-5.6 Sol Fast", input: 8, cacheWrite: 10, cacheRead: 0.8, output: 40, isAuto: false, pool: "api", aliases: ["gpt-5.6-sol-fast", "gpt-5-6-sol-fast"] },
-  { provider: "OpenAI", name: "GPT-5.6 Terra", input: 2, cacheWrite: 2.5, cacheRead: 0.2, output: 12, isAuto: false, pool: "api", aliases: ["gpt-5.6-terra", "gpt-5-6-terra"] },
-  { provider: "OpenAI", name: "GPT-5.6 Terra Fast", input: 4, cacheWrite: 5, cacheRead: 0.4, output: 24, isAuto: false, pool: "api", aliases: ["gpt-5.6-terra-fast", "gpt-5-6-terra-fast"] },
-  // Notes: prompt above 256k uses the 500k rows (2x standard, Fast at 3x standard). Prompt = uncached input + cache write + cache read.
+  { provider: "OpenAI", name: "GPT-5.6 Luna Fast", input: 0.4, cacheWrite: 0.5, cacheRead: 0.04, output: 2.4, isAuto: false, pool: "api", aliases: ["gpt-5.6-luna-fast", "gpt-5-6-luna-fast"], longContext: { above: 272000, to: "GPT-5.6 Luna Fast (>272k)" } },
+  { provider: "OpenAI", name: "GPT-5.6 Luna Fast (>272k)", input: 0.8, cacheWrite: 1, cacheRead: 0.08, output: 3.6, isAuto: false, pool: "api" },
+  // Notes: promotional pricing through November 21, 2026; Fast mode is 2x. Long context matches Luna: input-side 2x, output 1.5x.
+  { provider: "OpenAI", name: "GPT-5.6 Sol", input: 4, cacheWrite: 5, cacheRead: 0.4, output: 20, isAuto: false, pool: "api", aliases: ["gpt-5.6-sol", "gpt-5-6-sol"], longContext: { above: 272000, to: "GPT-5.6 Sol (>272k)" } },
+  { provider: "OpenAI", name: "GPT-5.6 Sol (>272k)", input: 8, cacheWrite: 10, cacheRead: 0.8, output: 30, isAuto: false, pool: "api" },
+  { provider: "OpenAI", name: "GPT-5.6 Sol Fast", input: 8, cacheWrite: 10, cacheRead: 0.8, output: 40, isAuto: false, pool: "api", aliases: ["gpt-5.6-sol-fast", "gpt-5-6-sol-fast"], longContext: { above: 272000, to: "GPT-5.6 Sol Fast (>272k)" } },
+  { provider: "OpenAI", name: "GPT-5.6 Sol Fast (>272k)", input: 16, cacheWrite: 20, cacheRead: 1.6, output: 60, isAuto: false, pool: "api" },
+  { provider: "OpenAI", name: "GPT-5.6 Terra", input: 2, cacheWrite: 2.5, cacheRead: 0.2, output: 12, isAuto: false, pool: "api", aliases: ["gpt-5.6-terra", "gpt-5-6-terra"], longContext: { above: 272000, to: "GPT-5.6 Terra (>272k)" } },
+  { provider: "OpenAI", name: "GPT-5.6 Terra (>272k)", input: 4, cacheWrite: 5, cacheRead: 0.4, output: 18, isAuto: false, pool: "api" },
+  { provider: "OpenAI", name: "GPT-5.6 Terra Fast", input: 4, cacheWrite: 5, cacheRead: 0.4, output: 24, isAuto: false, pool: "api", aliases: ["gpt-5.6-terra-fast", "gpt-5-6-terra-fast"], longContext: { above: 272000, to: "GPT-5.6 Terra Fast (>272k)" } },
+  { provider: "OpenAI", name: "GPT-5.6 Terra Fast (>272k)", input: 8, cacheWrite: 10, cacheRead: 0.8, output: 36, isAuto: false, pool: "api" },
+  // Notes: input length above 256k uses the 500k rows (standard 2x, Fast 3x standard). Input length = uncached input + cache write + cache read. Output does not flip the tier.
   { provider: "Cursor", name: "Grok 4.7", input: 2, cacheWrite: null, cacheRead: 0.5, output: 6, isAuto: false, pool: "firstParty", aliases: ["grok-4.7", "grok-4-7"], longContext: { above: 256000, to: "Grok 4.7 500k" } },
   { provider: "Cursor", name: "Grok 4.7 Fast", input: 4, cacheWrite: null, cacheRead: 1, output: 12, isAuto: false, pool: "firstParty", aliases: ["grok-4.7-fast", "grok-4-7-fast", "Grok 4.7 (Fast)"], longContext: { above: 256000, to: "Grok 4.7 500k Fast" } },
   { provider: "Cursor", name: "Grok 4.7 500k", input: 4, cacheWrite: null, cacheRead: 1, output: 12, isAuto: false, pool: "firstParty", aliases: ["grok-4.7-500k", "grok-4-7-500k"] },
@@ -89,8 +106,9 @@ const ENTRY_BY_NAME = new Map(PRICING_TABLE.map((entry) => [entry.name, entry]))
 export function applyLongContext(entry, tokens) {
   const rule = entry && entry.longContext;
   if (!rule) return entry;
-  const prompt = tokens.input + tokens.cacheWrite + tokens.cacheRead;
-  if (prompt <= rule.above) return entry;
+  // 门槛只看输入长度，输出不计入。输入长度 = 未缓存输入 + 缓存写入 + 缓存读取。
+  const inputLength = tokens.input + tokens.cacheWrite + tokens.cacheRead;
+  if (inputLength <= rule.above) return entry;
   return ENTRY_BY_NAME.get(rule.to) || entry;
 }
 
