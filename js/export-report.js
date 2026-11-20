@@ -1,4 +1,3 @@
-import { clearTrendSelection } from "./render.js";
 import { t } from "./i18n.js";
 
 export const PROJECT_URL = "https://github.com/creekmoon/cursor-usage-analysis";
@@ -72,56 +71,10 @@ function buildFooter(summary) {
 }
 
 function prepareExportClone(root) {
-  // 导出图只保留顶部 KPI 与「模型用量与花费」；趋势 / 花费构成 / 计算过程 / 未匹配一律不进图
-  for (const key of ["trend.heading", "composition.heading", "models.heading", "unmatched.heading"]) {
-    root.querySelectorAll(`[data-i18n="${key}"]`).forEach((el) => {
-      el.closest(".section")?.remove();
-    });
-  }
-
-  root.querySelectorAll(".segmented").forEach((el) => {
-    el.style.display = "none";
+  root.querySelectorAll("[data-export-hide]").forEach((el) => {
+    el.remove();
   });
-
-  for (const id of ["chartCrosshair", "chartTip", "clearSelection"]) {
-    const el = root.querySelector(`#${id}`);
-    if (el) el.style.display = "none";
-  }
-
-  // html2canvas 对 overflow:hidden 的文本常会裁掉首尾字形
-  root.querySelectorAll(
-    ".table-wrap, .model-compare-name, .usage-chart-host, .usage-panel"
-  ).forEach((el) => {
-    el.style.overflow = "visible";
-  });
-
-  root.querySelectorAll(".model-compare-name").forEach((el) => {
-    el.style.textOverflow = "clip";
-    el.style.whiteSpace = "normal";
-    el.style.wordBreak = "break-word";
-    el.style.overflow = "visible";
-    el.style.paddingLeft = "2px";
-  });
-
-  root.querySelectorAll(".model-compare-grid").forEach((el) => {
-    el.style.gridTemplateColumns = "minmax(132px, 1.1fr) 1.6fr 1.6fr minmax(148px, auto)";
-  });
-
-  root.querySelectorAll("[id]").forEach((el) => {
-    el.removeAttribute("id");
-  });
-
-  if (root.classList.contains("results")) {
-    root.classList.add("is-visible");
-    root.style.display = "block";
-    root.style.width = "100%";
-  }
-
-  root.querySelectorAll(".results").forEach((el) => {
-    el.classList.add("is-visible");
-    el.style.display = "block";
-    el.style.width = "100%";
-  });
+  root.querySelectorAll(".dx-tip, .dx-pop").forEach((el) => el.remove());
 }
 
 function createCaptureRoot(resultsEl, summary) {
@@ -174,7 +127,7 @@ function downloadCanvas(canvas, fileName) {
 async function renderToCanvas(html2canvas, target, scale) {
   const width = Math.max(CAPTURE_WIDTH, Math.ceil(target.scrollWidth || CAPTURE_WIDTH));
   return html2canvas(target, {
-    backgroundColor: "#F4F6F8",
+    backgroundColor: "#F1F3F6",
     scale,
     useCORS: true,
     logging: false,
@@ -192,12 +145,10 @@ async function renderToCanvas(html2canvas, target, scale) {
 }
 
 export async function exportReportImage({ summary }) {
-  const resultsEl = document.getElementById("results");
+  const resultsEl = document.getElementById("bento");
   if (!resultsEl || !summary) {
     throw new Error(t("export.error.failed"));
   }
-
-  clearTrendSelection();
 
   if (document.fonts?.ready) {
     try {

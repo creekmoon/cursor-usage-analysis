@@ -20,3 +20,18 @@ export function buildExportUsageEventsCsvUrl(now) {
   url.searchParams.set("strategy", "tokens");
   return url.toString();
 }
+
+/**
+ * 用 UTC 日历日拼导出地址。startISO / endISO 形如 2026-11-01，含首尾整天。
+ */
+export function buildExportUsageEventsCsvUrlForRange(startISO, endISO) {
+  const [ys, ms, ds] = String(startISO).split("-").map(Number);
+  const [ye, me, de] = String(endISO).split("-").map(Number);
+  const startDate = Date.UTC(ys, ms - 1, ds, 0, 0, 0, 0);
+  const endDate = Date.UTC(ye, me - 1, de, 23, 59, 59, 999);
+  const url = new URL("https://cursor.com/api/dashboard/export-usage-events-csv");
+  url.searchParams.set("startDate", String(startDate));
+  url.searchParams.set("endDate", String(endDate));
+  url.searchParams.set("strategy", "tokens");
+  return url.toString();
+}

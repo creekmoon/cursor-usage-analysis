@@ -80,6 +80,10 @@ function emptyBucket(seed) {
   };
 }
 
+export function eventDateKey(dateStr) {
+  return localDateKey(dateStr);
+}
+
 function localDateKey(dateStr) {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return null;
